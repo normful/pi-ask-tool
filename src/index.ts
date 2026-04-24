@@ -11,7 +11,7 @@ const OptionItemSchema = Type.Object({
 const QuestionItemSchema = Type.Object({
   id: Type.String({ description: "unique key" }),
   question: Type.String({ description: "prompt" }),
-  description: Type.Optional(Type.String({ description: "Markdown hint" })),
+  markdownCtx: Type.Optional(Type.String({ description: "Markdown hint" })),
   options: Type.Array(OptionItemSchema, {
     description: "choices (DO NOT include Other)",
     minItems: 1,
@@ -34,7 +34,7 @@ type AskParams = Static<typeof AskParamsSchema>;
 interface QuestionResult {
   id: string;
   question: string;
-  description?: string;
+  markdownCtx?: string;
   options: string[];
   multi: boolean;
   selectedOptions: string[];
@@ -44,7 +44,7 @@ interface QuestionResult {
 interface AskToolDetails {
   id?: string;
   question?: string;
-  description?: string;
+  markdownCtx?: string;
   options?: string[];
   multi?: boolean;
   selectedOptions?: string[];
@@ -80,11 +80,11 @@ function toSessionSafeQuestionResult(result: QuestionResult): QuestionResult {
     .map((selectedOption) => sanitizeForSessionText(selectedOption))
     .filter((selectedOption) => selectedOption.length > 0);
 
-  const rawDescription = result.description;
-  const description =
-    rawDescription == null
+  const rawMarkdownCtx = result.markdownCtx;
+  const markdownCtx =
+    rawMarkdownCtx == null
       ? undefined
-      : sanitizeMultilineForSessionText(rawDescription);
+      : sanitizeMultilineForSessionText(rawMarkdownCtx);
   const rawCustomInput = result.customInput;
   const customInput =
     rawCustomInput == null ? undefined : sanitizeForSessionText(rawCustomInput);
@@ -92,8 +92,8 @@ function toSessionSafeQuestionResult(result: QuestionResult): QuestionResult {
   return {
     id: sanitizeForSessionText(result.id) || "(unknown)",
     question: sanitizeForSessionText(result.question) || "(empty question)",
-    description:
-      description && description.length > 0 ? description : undefined,
+    markdownCtx:
+      markdownCtx && markdownCtx.length > 0 ? markdownCtx : undefined,
     options: result.options.map(sanitizeOptionForSessionText),
     multi: result.multi,
     selectedOptions,
@@ -141,9 +141,9 @@ function formatQuestionContext(
     `Prompt: ${result.question}`,
   ];
 
-  if (result.description) {
+  if (result.markdownCtx) {
     lines.push("Context:");
-    for (const descriptionLine of result.description.split("\n")) {
+    for (const descriptionLine of result.markdownCtx.split("\n")) {
       lines.push(`  ${descriptionLine}`);
     }
   }
@@ -232,8 +232,8 @@ export default function askExtension(pi: ExtensionAPI) {
         const result: QuestionResult = {
           id: q.id,
           question: q.question,
-          ...(q.description && q.description.trim().length > 0
-            ? { description: q.description }
+          ...(q.markdownCtx && q.markdownCtx.trim().length > 0
+            ? { markdownCtx: q.markdownCtx }
             : {}),
           options: optionLabels,
           multi: q.multi ?? false,
@@ -244,8 +244,8 @@ export default function askExtension(pi: ExtensionAPI) {
         const details: AskToolDetails = {
           id: q.id,
           question: q.question,
-          ...(q.description && q.description.trim().length > 0
-            ? { description: q.description }
+          ...(q.markdownCtx && q.markdownCtx.trim().length > 0
+            ? { markdownCtx: q.markdownCtx }
             : {}),
           options: optionLabels,
           multi: q.multi ?? false,
@@ -271,8 +271,8 @@ export default function askExtension(pi: ExtensionAPI) {
         results.push({
           id: q.id,
           question: q.question,
-          ...(q.description && q.description.trim().length > 0
-            ? { description: q.description }
+          ...(q.markdownCtx && q.markdownCtx.trim().length > 0
+            ? { markdownCtx: q.markdownCtx }
             : {}),
           options: q.options.map((option) => option.label),
           multi: q.multi ?? false,
