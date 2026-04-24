@@ -52,6 +52,13 @@ interface AskToolDetails {
   results?: QuestionResult[];
 }
 
+function withMarkdownCtx<T extends object>(obj: T, markdownCtx?: string): T & { markdownCtx?: string } {
+  if (markdownCtx?.trim()) {
+    return { ...obj, markdownCtx };
+  }
+  return obj as T & { markdownCtx?: string };
+}
+
 function sanitizeForSessionText(value: string): string {
   return value
     .replace(/[\r\n\t]/g, " ")
@@ -229,24 +236,21 @@ export default function askExtension(pi: ExtensionAPI) {
           : await askSingleQuestionWithInlineNote(ctx.ui, q as AskQuestion);
         const optionLabels = q.options.map((option) => option.label);
 
-        const result: QuestionResult = {
-          id: q.id,
-          question: q.question,
-          ...(q.markdownCtx && q.markdownCtx.trim().length > 0
-            ? { markdownCtx: q.markdownCtx }
-            : {}),
-          options: optionLabels,
-          multi: q.multi ?? false,
-          selectedOptions: selection.selectedOptions,
-          customInput: selection.customInput,
-        };
+        const result = withMarkdownCtx(
+          {
+            id: q.id,
+            question: q.question,
+            options: optionLabels,
+            multi: q.multi ?? false,
+            selectedOptions: selection.selectedOptions,
+            customInput: selection.customInput,
+          },
+          q.markdownCtx,
+        );
 
         const details: AskToolDetails = {
           id: q.id,
           question: q.question,
-          ...(q.markdownCtx && q.markdownCtx.trim().length > 0
-            ? { markdownCtx: q.markdownCtx }
-            : {}),
           options: optionLabels,
           multi: q.multi ?? false,
           selectedOptions: selection.selectedOptions,
@@ -268,17 +272,19 @@ export default function askExtension(pi: ExtensionAPI) {
       for (let i = 0; i < params.questions.length; i++) {
         const q = params.questions[i];
         const selection = tabResult.selections[i] ?? { selectedOptions: [] };
-        results.push({
-          id: q.id,
-          question: q.question,
-          ...(q.markdownCtx && q.markdownCtx.trim().length > 0
-            ? { markdownCtx: q.markdownCtx }
-            : {}),
-          options: q.options.map((option) => option.label),
-          multi: q.multi ?? false,
-          selectedOptions: selection.selectedOptions,
-          customInput: selection.customInput,
-        });
+        results.push(
+          withMarkdownCtx(
+            {
+              id: q.id,
+              question: q.question,
+              options: q.options.map((option) => option.label),
+              multi: q.multi ?? false,
+              selectedOptions: selection.selectedOptions,
+              customInput: selection.customInput,
+            },
+            q.markdownCtx,
+          ),
+        );
       }
 
       return {
