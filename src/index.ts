@@ -52,7 +52,10 @@ interface AskToolDetails {
   results?: QuestionResult[];
 }
 
-function withMarkdownCtx<T extends object>(obj: T, markdownCtx?: string): T & { markdownCtx?: string } {
+function withMarkdownCtx<T extends object>(
+  obj: T,
+  markdownCtx?: string,
+): T & { markdownCtx?: string } {
   if (markdownCtx?.trim()) {
     return { ...obj, markdownCtx };
   }
@@ -148,19 +151,6 @@ function formatQuestionContext(
     `Prompt: ${result.question}`,
   ];
 
-  if (result.markdownCtx) {
-    lines.push("Context:");
-    for (const descriptionLine of result.markdownCtx.split("\n")) {
-      lines.push(`  ${descriptionLine}`);
-    }
-  }
-
-  lines.push("Options:");
-  lines.push(
-    ...result.options.map(
-      (option, optionIndex) => `  ${optionIndex + 1}. ${option}`,
-    ),
-  );
   lines.push("Response:");
 
   const hasSelectedOptions = result.selectedOptions.length > 0;
