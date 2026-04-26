@@ -237,7 +237,6 @@ export async function askQuestionsWithTabs(
 			if (questionIndex == null) return;
 			const optionIndex = cursorOptionIndexByQuestion[questionIndex];
 			noteByQuestionByOption[questionIndex][optionIndex] = value;
-			requestUiRerender();
 		};
 
 		noteEditor.onSubmit = (value) => {

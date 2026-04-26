@@ -125,7 +125,6 @@ export async function askSingleQuestionWithInlineNote(
 
 		noteEditor.onChange = (value) => {
 			saveCurrentNoteFromEditor(value);
-			requestUiRerender();
 		};
 
 		noteEditor.onSubmit = (value) => {
