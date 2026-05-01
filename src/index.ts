@@ -187,7 +187,7 @@ function buildAskSessionContent(results: QuestionResult[]): string {
   return `User answers:\n${summaryLines}`;
 }
 
-const ASK_TOOL_DESCRIPTION = "Never ask questions via text — use this tool";
+const ASK_TOOL_DESCRIPTION = "ALWAYS use this tool to ask user questions";
 
 export default function askExtension(pi: ExtensionAPI) {
   pi.registerTool({
