@@ -191,8 +191,8 @@ const ASK_TOOL_DESCRIPTION = "ALWAYS use this tool to ask user questions";
 
 export default function askExtension(pi: ExtensionAPI) {
   pi.registerTool({
-    name: "ask_user_questions",
-    label: "Ask",
+    name: "socrates",
+    label: "Socrates",
     description: ASK_TOOL_DESCRIPTION,
     parameters: AskParamsSchema,
 
