@@ -10,13 +10,13 @@ const OptionItemSchema = Type.Object({
 
 const QuestionItemSchema = Type.Object({
   id: Type.String({ description: "unique key" }),
-  question: Type.String({ description: "prompt" }),
-  markdownCtx: Type.Optional(Type.String({ description: "Markdown hint" })),
+  question: Type.String({ description: "Question text displayed to the user" }),
+  markdownCtx: Type.Optional(Type.String({ description: "Markdown shown to user alongside question" })),
   options: Type.Array(OptionItemSchema, {
     description: "choices (DO NOT include Other)",
     minItems: 1,
   }),
-  multi: Type.Optional(Type.Boolean({ description: "true = multi-select" })),
+  multi: Type.Optional(Type.Boolean({})),
   recommended: Type.Optional(
     Type.Number({ description: "your recommendation (0-indexed)" }),
   ),
@@ -24,7 +24,6 @@ const QuestionItemSchema = Type.Object({
 
 const AskParamsSchema = Type.Object({
   questions: Type.Array(QuestionItemSchema, {
-    description: "Questions to ask",
     minItems: 1,
   }),
 });
