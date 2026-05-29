@@ -85,12 +85,7 @@ describe("ask extension tool", () => {
 		);
 
 		const text = getTextContent(result);
-		expect(text).toContain("User answers:\nauth: Session - split");
-		expect(text).toContain("Question 1 (auth)");
-		expect(text).toContain("Prompt: Which auth?");
-		expect(text).toContain("1. JWT");
-		expect(text).toContain("2. Session");
-		expect(text).toContain("Selected: Session - split");
+		expect(text).toBe("User answers:\nauth: Session - split");
 		expect(result.details).toEqual({
 			id: "auth",
 			question: "Which auth?",
@@ -111,7 +106,7 @@ describe("ask extension tool", () => {
 		});
 	});
 
-	it("includes optional markdownCtx in details and answer context", async () => {
+	it("includes optional markdownCtx in details", async () => {
 		const tool = createAskTool();
 		const markdownCtx = "# Background\n- Current bottleneck: network I/O\n```text\nClient -> API -> DB\n```";
 		const result = await tool.execute(
@@ -135,10 +130,7 @@ describe("ask extension tool", () => {
 		);
 
 		const text = getTextContent(result);
-		expect(text).toContain("Question 1 (architecture)");
-		expect(text).toContain("Context:");
-		expect(text).toContain("# Background");
-		expect(text).toContain("Client -> API -> DB");
+		expect(text).toBe("User answers:\narchitecture: Cache-first");
 		expect(result.details?.results?.[0]?.markdownCtx).toBe(markdownCtx);
 	});
 
@@ -171,11 +163,7 @@ describe("ask extension tool", () => {
 		);
 
 		const text = getTextContent(result);
-		expect(text).toContain('User answers:\nauth: [JWT] + Other: "org-sso"');
-		expect(text).toContain("Question 1 (auth)");
-		expect(text).toContain("Prompt: Which auth methods?");
-		expect(text).toContain("Selected: [JWT]");
-		expect(text).toContain("Custom input: org-sso");
+		expect(text).toBe('User answers:\nauth: [JWT] + Other: "org-sso"');
 		expect(result.details).toEqual({
 			id: "auth",
 			question: "Which auth methods?",
@@ -225,9 +213,7 @@ describe("ask extension tool", () => {
 		);
 
 		const text = getTextContent(result);
-		expect(text).toContain("User answers:\nauth: (cancelled)");
-		expect(text).toContain("Question 1 (auth)");
-		expect(text).toContain("Selected: (cancelled)");
+		expect(text).toBe("User answers:\nauth: (cancelled)");
 		expect(result.details).toEqual({
 			id: "auth",
 			question: "Which auth methods?",
@@ -281,11 +267,7 @@ describe("ask extension tool", () => {
 		);
 
 		const text = getTextContent(result);
-		expect(text).toContain("User answers:\nauth: JWT\ncache: None");
-		expect(text).toContain("Question 1 (auth)");
-		expect(text).toContain("Prompt: Which auth?");
-		expect(text).toContain("Question 2 (cache)");
-		expect(text).toContain("Prompt: Which cache?");
+		expect(text).toBe("User answers:\nauth: JWT\ncache: None");
 		expect(result.details?.results).toEqual([
 			{
 				id: "auth",
@@ -340,11 +322,7 @@ describe("ask extension tool", () => {
 		);
 
 		const text = getTextContent(result);
-		expect(text).toContain("User answers:\nauth: [Session]\ncache: Redis - local");
-		expect(text).toContain("Question 1 (auth)");
-		expect(text).toContain("Selected: [Session]");
-		expect(text).toContain("Question 2 (cache)");
-		expect(text).toContain("Selected: Redis - local");
+		expect(text).toBe("User answers:\nauth: [Session]\ncache: Redis - local");
 		expect(result.details?.results).toEqual([
 			{
 				id: "auth",
@@ -399,10 +377,7 @@ describe("ask extension tool", () => {
 		);
 
 		const text = getTextContent(result);
-		expect(text).toContain("User answers:\nauth: (cancelled)\ncache: (cancelled)");
-		expect(text).toContain("Question 1 (auth)");
-		expect(text).toContain("Question 2 (cache)");
-		expect(text).toContain("Selected: (cancelled)");
+		expect(text).toBe("User answers:\nauth: (cancelled)\ncache: (cancelled)");
 		expect(result.details?.results).toEqual([
 			{
 				id: "auth",
@@ -445,9 +420,7 @@ describe("ask extension tool", () => {
 		);
 
 		const text = getTextContent(result);
-		expect(text).toContain('User answers:\nauth: "enterprise sso"');
-		expect(text).toContain(`Selected: ${OTHER_OPTION}`);
-		expect(text).toContain("Custom input: enterprise sso");
+		expect(text).toBe('User answers:\nauth: "enterprise sso"');
 		expect(result.details?.customInput).toBe("enterprise\nsso");
 		expect(result.details?.results?.[0]?.customInput).toBe("enterprise\nsso");
 	});
@@ -480,12 +453,7 @@ describe("ask extension tool", () => {
 		);
 
 		const text = getTextContent(result);
-		expect(text).toContain("User answers:\nauth mode: Sess ion - line1 line2");
-		expect(text).toContain("Question 1 (auth mode)");
-		expect(text).toContain("Prompt: Which auth? Now");
-		expect(text).toContain("1. JWT Fast");
-		expect(text).toContain("2. Sess ion");
-		expect(text).toContain("Selected: Sess ion - line1 line2");
+		expect(text).toBe("User answers:\nauth mode: Sess ion - line1 line2");
 
 		expect(result.details?.id).toBe("auth\nmode");
 		expect(result.details?.question).toBe("Which\tauth?\nNow");
@@ -493,7 +461,7 @@ describe("ask extension tool", () => {
 		expect(result.details?.selectedOptions).toEqual(["Sess\nion\u0007 - line1\nline2\t\u0007"]);
 	});
 
-	it("keeps question numbering and block order deterministic", async () => {
+	it("orders results deterministically by question order", async () => {
 		const tool = createAskTool();
 		const result = await tool.execute(
 			"call-9",
@@ -531,11 +499,6 @@ describe("ask extension tool", () => {
 		);
 
 		const text = getTextContent(result);
-		const q1Index = text.indexOf("Question 1 (auth)");
-		const q2Index = text.indexOf("Question 2 (cache)");
-		const q3Index = text.indexOf("Question 3 (priority)");
-		expect(q1Index).toBeGreaterThan(-1);
-		expect(q2Index).toBeGreaterThan(q1Index);
-		expect(q3Index).toBeGreaterThan(q2Index);
+		expect(text).toBe("User answers:\nauth: Session\ncache: Redis\npriority: Latency");
 	});
 });

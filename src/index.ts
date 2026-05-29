@@ -192,10 +192,7 @@ function formatQuestionContext(
 function buildAskSessionContent(results: QuestionResult[]): string {
   const safeResults = results.map(toSessionSafeQuestionResult);
   const summaryLines = safeResults.map(formatQuestionResult).join("\n");
-  const contextBlocks = safeResults
-    .map((result, index) => formatQuestionContext(result, index))
-    .join("\n\n");
-  return `User answers:\n${summaryLines}\n\n${contextBlocks}`;
+  return `User answers:\n${summaryLines}`;
 }
 
 const ASK_TOOL_DESCRIPTION = "ALWAYS use this tool to ask user questions";
