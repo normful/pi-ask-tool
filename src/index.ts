@@ -150,6 +150,18 @@ function formatQuestionContext(
     `Prompt: ${result.question}`,
   ];
 
+  if (result.markdownCtx) {
+    lines.push("Context:");
+    lines.push(result.markdownCtx);
+  }
+
+  if (result.options.length > 0) {
+    lines.push("Options:");
+    for (let i = 0; i < result.options.length; i++) {
+      lines.push(`  ${i + 1}. ${result.options[i]}`);
+    }
+  }
+
   lines.push("Response:");
 
   const hasSelectedOptions = result.selectedOptions.length > 0;
@@ -180,10 +192,10 @@ function formatQuestionContext(
 function buildAskSessionContent(results: QuestionResult[]): string {
   const safeResults = results.map(toSessionSafeQuestionResult);
   const summaryLines = safeResults.map(formatQuestionResult).join("\n");
-  const _contextBlocks = safeResults
+  const contextBlocks = safeResults
     .map((result, index) => formatQuestionContext(result, index))
     .join("\n\n");
-  return `User answers:\n${summaryLines}`;
+  return `User answers:\n${summaryLines}\n\n${contextBlocks}`;
 }
 
 const ASK_TOOL_DESCRIPTION = "ALWAYS use this tool to ask user questions";
@@ -217,12 +229,24 @@ export default function askExtension(pi: ExtensionAPI) {
         };
       }
 
+      // Map the tool's markdownCtx field to the UI's description field
+      const questionsAsAskQuestions: AskQuestion[] = params.questions.map((q) => ({
+        id: q.id,
+        question: q.question,
+        description: q.markdownCtx,
+        options: q.options,
+        multi: q.multi,
+        recommended: q.recommended,
+      }));
+
       if (params.questions.length === 1) {
         const [q] = params.questions;
+        const uiQ = questionsAsAskQuestions[0];
         const selection = q.multi
-          ? ((await askQuestionsWithTabs(ctx.ui, [q as AskQuestion]))
-              .selections[0] ?? { selectedOptions: [] })
-          : await askSingleQuestionWithInlineNote(ctx.ui, q as AskQuestion);
+          ? ((await askQuestionsWithTabs(ctx.ui, [uiQ])).selections[0] ?? {
+              selectedOptions: [],
+            })
+          : await askSingleQuestionWithInlineNote(ctx.ui, uiQ);
         const optionLabels = q.options.map((option) => option.label);
 
         const result = withMarkdownCtx(
@@ -254,10 +278,7 @@ export default function askExtension(pi: ExtensionAPI) {
       }
 
       const results: QuestionResult[] = [];
-      const tabResult = await askQuestionsWithTabs(
-        ctx.ui,
-        params.questions as AskQuestion[],
-      );
+      const tabResult = await askQuestionsWithTabs(ctx.ui, questionsAsAskQuestions);
       for (let i = 0; i < params.questions.length; i++) {
         const q = params.questions[i];
         const selection = tabResult.selections[i] ?? { selectedOptions: [] };

@@ -33,10 +33,10 @@ function getTextContent(result: any): string {
 }
 
 describe("ask extension tool", () => {
-	it("registers ask tool", () => {
+	it("registers socrates tool", () => {
 		const tool = createAskTool();
-		expect(tool.name).toBe("ask");
-		expect(tool.label).toBe("Ask");
+		expect(tool.name).toBe("socrates");
+		expect(tool.label).toBe("Socrates");
 	});
 
 	it("returns error when UI is unavailable", async () => {
@@ -111,9 +111,9 @@ describe("ask extension tool", () => {
 		});
 	});
 
-	it("includes optional description in details and answer context", async () => {
+	it("includes optional markdownCtx in details and answer context", async () => {
 		const tool = createAskTool();
-		const description = "# Background\n- Current bottleneck: network I/O\n```text\nClient -> API -> DB\n```";
+		const markdownCtx = "# Background\n- Current bottleneck: network I/O\n```text\nClient -> API -> DB\n```";
 		const result = await tool.execute(
 			"call-3b",
 			{
@@ -121,7 +121,7 @@ describe("ask extension tool", () => {
 					{
 						id: "architecture",
 						question: "Which path should we prioritize?",
-						description,
+						markdownCtx,
 						options: [{ label: "Cache-first" }, { label: "DB-first" }],
 					},
 				],
@@ -139,8 +139,7 @@ describe("ask extension tool", () => {
 		expect(text).toContain("Context:");
 		expect(text).toContain("# Background");
 		expect(text).toContain("Client -> API -> DB");
-		expect(result.details?.description).toBe(description);
-		expect(result.details?.results?.[0]?.description).toBe(description);
+		expect(result.details?.results?.[0]?.markdownCtx).toBe(markdownCtx);
 	});
 
 	it("handles single multi question via tab submit flow", async () => {
