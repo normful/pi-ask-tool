@@ -160,8 +160,8 @@ export async function askQuestionsWithTabs(
 			selectList: {
 				selectedPrefix: (text) => theme.fg("accent", text),
 				selectedText: (text) => theme.fg("accent", text),
-				description: (text) => theme.fg("muted", text),
-				scrollInfo: (text) => theme.fg("dim", text),
+				description: (text) => theme.fg("syntaxFunction", text),
+				scrollInfo: (text) => theme.fg("syntaxType", text),
 				noMatch: (text) => theme.fg("warning", text),
 			},
 		};
@@ -185,7 +185,7 @@ export async function askQuestionsWithTabs(
 		const descriptionMarkdownByQuestion = preparedQuestions.map((preparedQuestion) =>
 			preparedQuestion.description && preparedQuestion.description.trim().length > 0
 				? new Markdown(preparedQuestion.description, 0, 0, markdownTheme, {
-						color: (text) => theme.fg("muted", text),
+						color: (text) => theme.fg("syntaxFunction", text),
 					})
 				: undefined,
 		);
@@ -289,7 +289,7 @@ export async function askQuestionsWithTabs(
 				const tabLabel = ` ${statusIcon} ${preparedQuestion.tabLabel} `;
 				const styledTabLabel = isActiveTab
 					? theme.bg("selectedBg", theme.fg("text", tabLabel))
-					: theme.fg(isQuestionValid ? "success" : "muted", tabLabel);
+					: theme.fg(isQuestionValid ? "success" : "syntaxFunction", tabLabel);
 				tabParts.push(`${styledTabLabel} `);
 			}
 
@@ -298,7 +298,7 @@ export async function askQuestionsWithTabs(
 			const submitLabel = " ✓ Submit ";
 			const styledSubmitLabel = isSubmitTabActive
 				? theme.bg("selectedBg", theme.fg("text", submitLabel))
-				: theme.fg(canSubmit ? "success" : "dim", submitLabel);
+				: theme.fg(canSubmit ? "success" : "syntaxType", submitLabel);
 			tabParts.push(`${styledSubmitLabel} →`);
 			return tabParts.join("");
 		};
@@ -323,7 +323,7 @@ export async function askQuestionsWithTabs(
 					noteByQuestionByOption[questionIndex],
 				);
 				const statusIcon = isValid ? theme.fg("success", "●") : theme.fg("warning", "○");
-				addLine(` ${statusIcon} ${theme.fg("muted", `${preparedQuestion.tabLabel}:`)} ${theme.fg("text", value)}`);
+				addLine(` ${statusIcon} ${theme.fg("syntaxFunction", `${preparedQuestion.tabLabel}:`)} ${theme.fg("text", value)}`);
 			}
 
 			renderedLines.push("");
@@ -342,7 +342,7 @@ export async function askQuestionsWithTabs(
 					.join(", ");
 				addLine(theme.fg("warning", ` Complete required answers: ${missingQuestions}`));
 			}
-			addLine(theme.fg("dim", " ←/→ switch tabs • Esc cancel"));
+			addLine(theme.fg("syntaxType", " ←/→ switch tabs • Esc cancel"));
 		};
 
 		const renderQuestionTab = (width: number, renderedLines: string[], questionIndex: number): void => {
@@ -397,18 +397,18 @@ export async function askQuestionsWithTabs(
 
 			renderedLines.push("");
 			if (isNoteEditorOpen) {
-				addLine(theme.fg("dim", " Typing note inline • Enter save note • Tab/Esc stop editing"));
+				addLine(theme.fg("syntaxType", " Typing note inline • Enter save note • Tab/Esc stop editing"));
 			} else {
 				if (preparedQuestion.multi) {
 					addLine(
 						theme.fg(
-							"dim",
+							"syntaxType",
 							" ↑↓ move • Enter toggle/select • Tab add note • ←/→ switch tabs • Esc cancel",
 						),
 					);
 				} else {
 					addLine(
-						theme.fg("dim", " ↑↓ move • Enter select • Tab add note • ←/→ switch tabs • Esc cancel"),
+						theme.fg("syntaxType", " ↑↓ move • Enter select • Tab add note • ←/→ switch tabs • Esc cancel"),
 					);
 				}
 			}
