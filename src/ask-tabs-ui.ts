@@ -420,6 +420,9 @@ export async function askQuestionsWithTabs(
 			const renderedLines: string[] = [];
 			const addLine = (line: string) => renderedLines.push(truncateToWidth(line, width));
 
+			// OSC 133 D marks command boundary for iTerm2/Warp terminals
+			process.stdout.write("\x1b]133;D;0\x07");
+
 			addLine(theme.fg("accent", "─".repeat(width)));
 			addLine(` ${renderTabs()}`);
 			renderedLines.push("");
