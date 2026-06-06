@@ -149,6 +149,7 @@ export async function askQuestionsWithTabs(
 		let isNoteEditorOpen = false;
 		let cachedRenderedLines: string[] | undefined;
 		let cachedRenderedWidth: number | undefined;
+		let alertedUser = false;
 		const cursorOptionIndexByQuestion = [...initialCursorOptionIndexByQuestion];
 		const selectedOptionIndexesByQuestion = preparedQuestions.map(() => [] as number[]);
 		const noteByQuestionByOption = preparedQuestions.map((preparedQuestion) =>
@@ -420,8 +421,12 @@ export async function askQuestionsWithTabs(
 			const renderedLines: string[] = [];
 			const addLine = (line: string) => renderedLines.push(truncateToWidth(line, width));
 
-			// OSC 133 D marks command boundary for iTerm2/Warp terminals
-			process.stdout.write("\x1b]133;D;0\x07");
+			// Alert user on first render only: BEL + terminal notification (OSC 777)
+			if (!alertedUser) {
+				alertedUser = true;
+				process.stdout.write("\x07");
+				process.stdout.write("\x1b]777;notify;Pi Ask;Questions awaiting your answer\x07");
+			}
 
 			addLine(theme.fg("accent", "─".repeat(width)));
 			addLine(` ${renderTabs()}`);
