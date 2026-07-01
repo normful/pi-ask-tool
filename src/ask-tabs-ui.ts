@@ -343,7 +343,7 @@ export async function askQuestionsWithTabs(
 					.join(", ");
 				addLine(theme.fg("warning", ` Complete required answers: ${missingQuestions}`));
 			}
-			addLine(theme.fg("syntaxType", " ←/→ switch tabs • Alt+E cancel"));
+			addLine(theme.fg("syntaxType", " ←/→ switch tabs • F6 cancel"));
 		};
 
 		const renderQuestionTab = (width: number, renderedLines: string[], questionIndex: number): void => {
@@ -398,18 +398,18 @@ export async function askQuestionsWithTabs(
 
 			renderedLines.push("");
 			if (isNoteEditorOpen) {
-				addLine(theme.fg("syntaxType", " Typing note inline • Enter save note • Tab/Esc stop editing"));
+				addLine(theme.fg("syntaxType", " Typing note inline • Enter save note • Tab/Esc stop editing • F7 clear text"));
 			} else {
 				if (preparedQuestion.multi) {
 					addLine(
 						theme.fg(
 							"syntaxType",
-							" ↑↓ move • Enter toggle/select • Tab add note • ←/→ switch tabs • Alt+E cancel",
+							" ↑↓ move • Enter toggle/select • Tab add note • ←/→ switch tabs • F6 cancel",
 						),
 					);
 				} else {
 					addLine(
-						theme.fg("syntaxType", " ↑↓ move • Enter select • Tab add note • ←/→ switch tabs • Alt+E cancel"),
+						theme.fg("syntaxType", " ↑↓ move • Enter select • Tab add note • ←/→ switch tabs • F6 cancel"),
 					);
 				}
 			}
@@ -456,7 +456,7 @@ export async function askQuestionsWithTabs(
 					requestUiRerender();
 					return;
 				}
-				if (matchesKey(data, Key.alt("c"))) {
+				if (matchesKey(data, Key.f7)) {
 					noteEditor.setText("");
 					requestUiRerender();
 					return;
@@ -483,7 +483,7 @@ export async function askQuestionsWithTabs(
 					done(createTabsUiStateSnapshot(false, selectedOptionIndexesByQuestion, noteByQuestionByOption));
 					return;
 				}
-				if (matchesKey(data, Key.alt("e"))) {
+				if (matchesKey(data, Key.f6)) {
 					done(createTabsUiStateSnapshot(true, selectedOptionIndexesByQuestion, noteByQuestionByOption));
 				}
 				return;
@@ -550,7 +550,7 @@ export async function askQuestionsWithTabs(
 				return;
 			}
 
-			if (matchesKey(data, Key.alt("e"))) {
+			if (matchesKey(data, Key.f6)) {
 				done(createTabsUiStateSnapshot(true, selectedOptionIndexesByQuestion, noteByQuestionByOption));
 			}
 		};
