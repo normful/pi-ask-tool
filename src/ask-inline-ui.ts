@@ -201,9 +201,9 @@ export async function askSingleQuestionWithInlineNote(
 			if (isNoteEditorOpen) {
 				addLine(theme.fg("dim", " Typing note inline • Enter submit • Tab/Esc stop editing"));
 			} else if (getTrimmedNoteForOption(cursorOptionIndex).length > 0) {
-				addLine(theme.fg("dim", " ↑↓ move • Enter submit • Tab edit note • Esc cancel"));
+				addLine(theme.fg("dim", " ↑↓ move • Enter submit • Tab edit note • Alt+E cancel"));
 			} else {
-				addLine(theme.fg("dim", " ↑↓ move • Enter submit • Tab add note • Esc cancel"));
+				addLine(theme.fg("dim", " ↑↓ move • Enter submit • Tab add note • Alt+E cancel"));
 			}
 
 			addLine(theme.fg("accent", "─".repeat(width)));
@@ -262,7 +262,7 @@ export async function askSingleQuestionWithInlineNote(
 				return;
 			}
 
-			if (matchesKey(data, Key.escape)) {
+			if (matchesKey(data, Key.alt("e"))) {
 				done({ cancelled: true });
 			}
 		};

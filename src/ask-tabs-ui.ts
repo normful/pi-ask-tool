@@ -343,7 +343,7 @@ export async function askQuestionsWithTabs(
 					.join(", ");
 				addLine(theme.fg("warning", ` Complete required answers: ${missingQuestions}`));
 			}
-			addLine(theme.fg("syntaxType", " ←/→ switch tabs • Esc cancel"));
+			addLine(theme.fg("syntaxType", " ←/→ switch tabs • Alt+E cancel"));
 		};
 
 		const renderQuestionTab = (width: number, renderedLines: string[], questionIndex: number): void => {
@@ -404,12 +404,12 @@ export async function askQuestionsWithTabs(
 					addLine(
 						theme.fg(
 							"syntaxType",
-							" ↑↓ move • Enter toggle/select • Tab add note • ←/→ switch tabs • Esc cancel",
+							" ↑↓ move • Enter toggle/select • Tab add note • ←/→ switch tabs • Alt+E cancel",
 						),
 					);
 				} else {
 					addLine(
-						theme.fg("syntaxType", " ↑↓ move • Enter select • Tab add note • ←/→ switch tabs • Esc cancel"),
+						theme.fg("syntaxType", " ↑↓ move • Enter select • Tab add note • ←/→ switch tabs • Alt+E cancel"),
 					);
 				}
 			}
@@ -478,7 +478,7 @@ export async function askQuestionsWithTabs(
 					done(createTabsUiStateSnapshot(false, selectedOptionIndexesByQuestion, noteByQuestionByOption));
 					return;
 				}
-				if (matchesKey(data, Key.escape)) {
+				if (matchesKey(data, Key.alt("e"))) {
 					done(createTabsUiStateSnapshot(true, selectedOptionIndexesByQuestion, noteByQuestionByOption));
 				}
 				return;
@@ -545,7 +545,7 @@ export async function askQuestionsWithTabs(
 				return;
 			}
 
-			if (matchesKey(data, Key.escape)) {
+			if (matchesKey(data, Key.alt("e"))) {
 				done(createTabsUiStateSnapshot(true, selectedOptionIndexesByQuestion, noteByQuestionByOption));
 			}
 		};
