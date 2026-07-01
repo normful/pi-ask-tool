@@ -199,7 +199,7 @@ export async function askSingleQuestionWithInlineNote(
 			renderedLines.push("");
 
 			if (isNoteEditorOpen) {
-				addLine(theme.fg("dim", " Typing note inline • Enter submit • Tab/Esc stop editing"));
+				addLine(theme.fg("dim", " Typing note inline • Enter submit • Tab/Esc stop editing • F7 clear text"));
 			} else if (getTrimmedNoteForOption(cursorOptionIndex).length > 0) {
 				addLine(theme.fg("dim", " ↑↓ move • Enter submit • Tab edit note • F6 cancel"));
 			} else {
