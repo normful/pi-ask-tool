@@ -456,6 +456,11 @@ export async function askQuestionsWithTabs(
 					requestUiRerender();
 					return;
 				}
+				if (matchesKey(data, Key.alt("c"))) {
+					noteEditor.setText("");
+					requestUiRerender();
+					return;
+				}
 				noteEditor.handleInput(data);
 				requestUiRerender();
 				return;

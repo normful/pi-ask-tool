@@ -224,6 +224,11 @@ export async function askSingleQuestionWithInlineNote(
 					requestUiRerender();
 					return;
 				}
+				if (matchesKey(data, Key.alt("c"))) {
+					noteEditor.setText("");
+					requestUiRerender();
+					return;
+				}
 				noteEditor.handleInput(data);
 				requestUiRerender();
 				return;
