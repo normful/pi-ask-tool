@@ -203,7 +203,7 @@ export async function askSingleQuestionWithInlineNote(
 			} else if (getTrimmedNoteForOption(cursorOptionIndex).length > 0) {
 				addLine(theme.fg("dim", " ↑↓ move • Enter submit • Tab edit note • F6 exit entirely"));
 			} else {
-				addLine(theme.fg("dim", " ↑↓ move • Enter submit • Tab add note • F6 cancel"));
+				addLine(theme.fg("dim", " ↑↓ move • Enter submit • Tab add note • F6 exit entirely"));
 			}
 
 			addLine(theme.fg("accent", "─".repeat(width)));

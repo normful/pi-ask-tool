@@ -404,12 +404,12 @@ export async function askQuestionsWithTabs(
 					addLine(
 						theme.fg(
 							"syntaxType",
-							" ↑↓ move • Enter toggle/select • Tab add note • ←/→ switch tabs • F6 cancel",
+							" ↑↓ move • Enter toggle/select • Tab add note • ←/→ switch tabs • F6 exit entirely",
 						),
 					);
 				} else {
 					addLine(
-						theme.fg("syntaxType", " ↑↓ move • Enter select • Tab add note • ←/→ switch tabs • F6 cancel"),
+						theme.fg("syntaxType", " ↑↓ move • Enter select • Tab add note • ←/→ switch tabs • F6 exit entirely"),
 					);
 				}
 			}
