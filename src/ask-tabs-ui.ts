@@ -343,7 +343,7 @@ export async function askQuestionsWithTabs(
 					.join(", ");
 				addLine(theme.fg("warning", ` Complete required answers: ${missingQuestions}`));
 			}
-			addLine(theme.fg("syntaxType", " ←/→ switch tabs • F6 cancel"));
+			addLine(theme.fg("syntaxType", " ←/→ switch tabs • F6 exit entirely"));
 		};
 
 		const renderQuestionTab = (width: number, renderedLines: string[], questionIndex: number): void => {
