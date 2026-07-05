@@ -154,8 +154,13 @@ export async function askSingleQuestionWithInlineNote(
 				const markerText = `${bullet} `;
 				const optionColor = isCursorOption ? "accent" : "text";
 				const prefixWidth = visibleWidth(cursorPrefixText) + visibleWidth(markerText);
+				// Render option label as Markdown when idle (editing shows plain text so cursor math works)
+				const displayLabel =
+					!isEditingThisOption && optionLabel.length > 0
+						? new Markdown(optionLabel, 0, 0, markdownTheme).render(Math.max(1, width)).join("\n")
+						: optionLabel;
 				const wrappedInlineLabelLines = buildWrappedOptionLabelWithInlineNote(
-					optionLabel,
+					displayLabel,
 					getRawNoteForOption(optionIndex),
 					isEditingThisOption,
 					Math.max(1, width - prefixWidth),
