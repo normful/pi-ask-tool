@@ -21,7 +21,7 @@ import {
 interface PreparedQuestion {
 	id: string;
 	question: string;
-	description?: string;
+	markdownCtx?: string;
 	options: string[];
 	tabLabel: string;
 	multi: boolean;
@@ -129,7 +129,7 @@ export async function askQuestionsWithTabs(
 		return {
 			id: question.id,
 			question: question.question,
-			description: question.description,
+			markdownCtx: question.markdownCtx,
 			options: optionLabels,
 			tabLabel: normalizeTabLabel(question.id, `Q${questionIndex + 1}`),
 			multi: question.multi === true,
@@ -165,8 +165,8 @@ export async function askQuestionsWithTabs(
 		const noteEditor = new Editor(tui, editorTheme);
 		const markdownTheme = createMarkdownTheme(theme);
 		const descriptionMarkdownByQuestion = preparedQuestions.map((preparedQuestion) =>
-			preparedQuestion.description && preparedQuestion.description.trim().length > 0
-				? new Markdown(preparedQuestion.description, 0, 0, markdownTheme, {
+			preparedQuestion.markdownCtx && preparedQuestion.markdownCtx.trim().length > 0
+				? new Markdown(preparedQuestion.markdownCtx, 0, 0, markdownTheme, {
 						color: (text) => theme.fg("syntaxFunction", text),
 					})
 				: undefined,

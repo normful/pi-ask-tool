@@ -58,7 +58,7 @@ describe("askSingleQuestionWithInlineNote interactive branches", () => {
 
 		const result = await askSingleQuestionWithInlineNote(ui, {
 			question: "Choose one very long answer so wrapped rendering is exercised in tests.",
-			description: RICH_MARKDOWN,
+			markdownCtx: RICH_MARKDOWN,
 			options: [{ label: "Default strategy with extra-long option label" }],
 		});
 
@@ -220,9 +220,10 @@ describe("askQuestionsWithTabs interactive branches", () => {
 			{
 				id: "auth_methods",
 				question: "Select all methods",
-				description: RICH_MARKDOWN,
+				markdownCtx: RICH_MARKDOWN,
 				options: [{ label: "JWT with very long explanatory label" }, { label: "Session" }],
 				multi: true,
+				recommended: 0,
 			},
 		]);
 
@@ -264,7 +265,10 @@ describe("askQuestionsWithTabs interactive branches", () => {
 			{
 				id: "primary_choice",
 				question: "Pick one option",
+				markdownCtx: "",
 				options: [{ label: "Option A" }, { label: "Option B" }],
+				multi: false,
+				recommended: 0,
 			},
 		]);
 
@@ -297,7 +301,7 @@ describe("askQuestionsWithTabs interactive branches", () => {
 		} as unknown as ExtensionUIContext;
 
 		const result = await askQuestionsWithTabs(ui, [
-			{ id: "single_nav", question: "Single question", options: [{ label: "A" }, { label: "B" }] },
+			{ markdownCtx: "", id: "single_nav", question: "Single question", options: [{ label: "A" }, { label: "B" }], multi: false, recommended: 0 },
 		]);
 
 		expect(result).toEqual({
@@ -326,8 +330,8 @@ describe("askQuestionsWithTabs interactive branches", () => {
 		} as unknown as ExtensionUIContext;
 
 		const result = await askQuestionsWithTabs(ui, [
-			{ id: "q1", question: "Question 1", options: [{ label: "A" }, { label: "B" }] },
-			{ id: "q2", question: "Question 2", options: [{ label: "C" }, { label: "D" }] },
+			{ markdownCtx: "", id: "q1", question: "Question 1", options: [{ label: "A" }, { label: "B" }], multi: false, recommended: 0 },
+			{ markdownCtx: "", id: "q2", question: "Question 2", options: [{ label: "C" }, { label: "D" }], multi: false, recommended: 0 },
 		]);
 
 		expect(result).toEqual({
@@ -355,7 +359,7 @@ describe("askQuestionsWithTabs interactive branches", () => {
 		} as unknown as ExtensionUIContext;
 
 		const result = await askQuestionsWithTabs(ui, [
-			{ id: "q1", question: "Question 1", options: [{ label: "A" }] },
+			{ markdownCtx: "", id: "q1", question: "Question 1", options: [{ label: "A" }], multi: false, recommended: 0 },
 		]);
 
 		expect(result).toEqual({
@@ -386,8 +390,8 @@ describe("askQuestionsWithTabs interactive branches", () => {
 		} as unknown as ExtensionUIContext;
 
 		const result = await askQuestionsWithTabs(ui, [
-			{ id: "q1", question: "Question 1", options: [{ label: "A" }] },
-			{ id: "q2", question: "Question 2", options: [{ label: "B" }] },
+			{ markdownCtx: "", id: "q1", question: "Question 1", options: [{ label: "A" }], multi: false, recommended: 0 },
+			{ markdownCtx: "", id: "q2", question: "Question 2", options: [{ label: "B" }], multi: false, recommended: 0 },
 		]);
 
 		expect(result).toEqual({
@@ -418,7 +422,7 @@ describe("askQuestionsWithTabs interactive branches", () => {
 		} as unknown as ExtensionUIContext;
 
 		const result = await askQuestionsWithTabs(ui, [
-			{ id: "q1", question: "Q1", options: [{ label: "A" }] },
+			{ markdownCtx: "", id: "q1", question: "Q1", options: [{ label: "A" }], multi: false, recommended: 0 },
 		]);
 
 		expect(result).toEqual({
@@ -447,7 +451,7 @@ describe("askQuestionsWithTabs interactive branches", () => {
 		} as unknown as ExtensionUIContext;
 
 		const result = await askQuestionsWithTabs(ui, [
-			{ id: "simple", question: "Simple", options: [{ label: "A" }, { label: "B" }] },
+			{ markdownCtx: "", id: "simple", question: "Simple", options: [{ label: "A" }, { label: "B" }], multi: false, recommended: 0 },
 		]);
 
 		expect(result).toEqual({
@@ -470,9 +474,9 @@ describe("askQuestionsWithTabs interactive branches", () => {
 		} as unknown as ExtensionUIContext;
 
 		const result = await askQuestionsWithTabs(ui, [
-			{ id: "neg", question: "Negative recommended", options: [{ label: "A" }, { label: "B" }], recommended: -1 },
-			{ id: "over", question: "Overflow recommended", options: [{ label: "C" }, { label: "D" }], recommended: 99 },
-			{ id: "ok", question: "Valid recommended", options: [{ label: "E" }, { label: "F" }], recommended: 1 },
+			{ markdownCtx: "", id: "neg", question: "Negative recommended", options: [{ label: "A" }, { label: "B" }], multi: false, recommended: -1 },
+			{ markdownCtx: "", id: "over", question: "Overflow recommended", options: [{ label: "C" }, { label: "D" }], multi: false, recommended: 99 },
+			{ markdownCtx: "", id: "ok", question: "Valid recommended", options: [{ label: "E" }, { label: "F" }], multi: false, recommended: 1 },
 		]);
 
 		expect(result).toEqual({

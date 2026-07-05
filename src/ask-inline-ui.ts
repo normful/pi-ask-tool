@@ -19,7 +19,7 @@ import {
 
 interface SingleQuestionInput {
 	question: string;
-	description?: string;
+	markdownCtx?: string;
 	options: AskOption[];
 	recommended?: number;
 }
@@ -74,8 +74,8 @@ export async function askSingleQuestionWithInlineNote(
 		const noteEditor = new Editor(tui, editorTheme);
 		const markdownTheme = createMarkdownTheme(theme);
 		const questionDescriptionMarkdown =
-			questionInput.description && questionInput.description.trim().length > 0
-				? new Markdown(questionInput.description, 0, 0, markdownTheme, {
+			questionInput.markdownCtx && questionInput.markdownCtx.trim().length > 0
+				? new Markdown(questionInput.markdownCtx, 0, 0, markdownTheme, {
 						color: (text) => theme.fg("muted", text),
 					})
 				: undefined;

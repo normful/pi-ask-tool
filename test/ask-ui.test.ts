@@ -129,12 +129,18 @@ describe("askQuestionsWithTabs", () => {
 			{
 				id: "auth",
 				question: "Which auth?",
+				markdownCtx: "",
 				options: [{ label: "JWT" }, { label: "Session" }],
+				multi: false,
+				recommended: 0,
 			},
 			{
 				id: "cache",
 				question: "Which cache?",
+				markdownCtx: "",
 				options: [{ label: "Redis" }, { label: "None" }],
+				multi: false,
+				recommended: 0,
 			},
 		];
 
@@ -157,13 +163,18 @@ describe("askQuestionsWithTabs", () => {
 			{
 				id: "auth",
 				question: "Which auth methods?",
+				markdownCtx: "",
 				options: [{ label: "JWT" }, { label: "Session" }],
 				multi: true,
+				recommended: 0,
 			},
 			{
 				id: "cache",
 				question: "Which cache?",
+				markdownCtx: "",
 				options: [{ label: "Redis" }, { label: "None" }],
+				multi: false,
+				recommended: 0,
 			},
 		];
 
@@ -189,8 +200,10 @@ describe("askQuestionsWithTabs", () => {
 			{
 				id: "auth",
 				question: "Which auth methods?",
+				markdownCtx: "",
 				options: [{ label: "JWT" }, { label: "Session" }],
 				multi: true,
+				recommended: 0,
 			},
 		];
 
@@ -213,13 +226,18 @@ describe("askQuestionsWithTabs", () => {
 			{
 				id: "auth",
 				question: "Which auth methods?",
+				markdownCtx: "",
 				options: [{ label: "JWT" }, { label: "Session" }],
 				multi: true,
+				recommended: 0,
 			},
 			{
 				id: "cache",
 				question: "Which cache?",
+				markdownCtx: "",
 				options: [{ label: "Redis" }, { label: "None" }],
+				multi: false,
+				recommended: 0,
 			},
 		];
 

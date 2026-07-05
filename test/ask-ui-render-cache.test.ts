@@ -49,7 +49,7 @@ describe("ask UI render cache width safety", () => {
 		await askSingleQuestionWithInlineNote(ui, {
 			question:
 				"Which execution path should we prioritize first when response latency and network I/O are both rising?",
-			description: "# Context\n- This is a long explanation block to trigger markdown rendering.",
+			markdownCtx: "# Context\n- This is a long explanation block to trigger markdown rendering.",
 			options: [{ label: "Cache-first" }, { label: "DB-first" }],
 		});
 
@@ -91,13 +91,18 @@ describe("ask UI render cache width safety", () => {
 				id: "plugin_strategy",
 				question:
 					"Daily Notes related strategy should be selected after checking current plugin availability and migration risk.",
-				description: "# Context\n- No community plugin folder exists yet.",
+				markdownCtx: "# Context\n- No community plugin folder exists yet.",
 				options: [{ label: "Core-only" }, { label: "Core + periodic prep" }],
+				multi: false,
+				recommended: 0,
 			},
 			{
 				id: "date_format",
 				question: "Which date format should be used as a migration-safe default?",
+				markdownCtx: "",
 				options: [{ label: "YYYY-MM-DD" }, { label: "gggg/[M]MM/[W]ww/YYYY-MM-DD(ddd)" }],
+				multi: false,
+				recommended: 0,
 			},
 		];
 

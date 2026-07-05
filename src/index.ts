@@ -5,21 +5,29 @@ import { askSingleQuestionWithInlineNote } from "./ask-inline-ui";
 import { askQuestionsWithTabs } from "./ask-tabs-ui";
 
 const OptionItemSchema = Type.Object({
-  label: Type.String({}),
+  label: Type.String({
+    description: "Only thing user sees when choosing. Supports Markdown",
+  }),
 });
 
 const QuestionItemSchema = Type.Object({
   id: Type.String({ description: "unique key" }),
-  question: Type.String({ description: "Question text displayed to the user" }),
-  markdownCtx: Type.Optional(Type.String({ description: "Markdown shown to user alongside question" })),
+  question: Type.String({
+    description: "Question for user. Supports Markdown",
+  }),
+  markdownCtx: Type.String({
+    description: "Context alongside question. Supports Markdown",
+  }),
   options: Type.Array(OptionItemSchema, {
-    description: "choices (DO NOT include Other)",
+    description: "Choices for user (DO NOT include Other)",
     minItems: 1,
   }),
-  multi: Type.Optional(Type.Boolean({})),
-  recommended: Type.Optional(
-    Type.Number({ description: "your recommendation (0-indexed)" }),
-  ),
+  multi: Type.Boolean({
+    description: "User should choose multiple answers",
+  }),
+  recommended: Type.Number({
+    description: "Your recommended option (0-indexed)",
+  }),
 });
 
 const AskParamsSchema = Type.Object({
@@ -33,7 +41,7 @@ type AskParams = Static<typeof AskParamsSchema>;
 interface QuestionResult {
   id: string;
   question: string;
-  markdownCtx?: string;
+  markdownCtx: string;
   options: string[];
   multi: boolean;
   selectedOptions: string[];
@@ -51,14 +59,64 @@ interface AskToolDetails {
   results?: QuestionResult[];
 }
 
-function withMarkdownCtx<T extends object>(
-  obj: T,
-  markdownCtx?: string,
-): T & { markdownCtx?: string } {
-  if (markdownCtx?.trim()) {
-    return { ...obj, markdownCtx };
+function validateQuestions(questions: AskParams["questions"]): string[] {
+  const errors: string[] = [];
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+    const prefix = `questions[${i}]`;
+
+    // id: required non-empty string
+    if (typeof q.id !== "string" || q.id.trim().length === 0) {
+      errors.push(`${prefix}.id: must be a non-empty string`);
+    }
+
+    // question: required non-empty string
+    if (typeof q.question !== "string" || q.question.trim().length === 0) {
+      errors.push(`${prefix}.question: must be a non-empty string`);
+    }
+
+    // markdownCtx: required string (now non-optional)
+    if (typeof q.markdownCtx !== "string") {
+      errors.push(`${prefix}.markdownCtx: must be a string`);
+    }
+
+    // options: required non-empty array
+    if (!Array.isArray(q.options) || q.options.length === 0) {
+      errors.push(`${prefix}.options: must be a non-empty array`);
+    } else {
+      // validate each option label
+      for (let j = 0; j < q.options.length; j++) {
+        const opt = q.options[j];
+        if (
+          !opt ||
+          typeof opt.label !== "string" ||
+          opt.label.trim().length === 0
+        ) {
+          errors.push(
+            `${prefix}.options[${j}].label: must be a non-empty string`,
+          );
+        }
+      }
+
+      // recommended: required finite number within option bounds
+      if (typeof q.recommended !== "number" || !Number.isFinite(q.recommended)) {
+        errors.push(`${prefix}.recommended: must be a finite number`);
+      } else if (
+        q.recommended < 0 ||
+        q.recommended >= q.options.length
+      ) {
+        errors.push(
+          `${prefix}.recommended: must be between 0 and ${q.options.length - 1}`,
+        );
+      }
+    }
+
+    // multi: required boolean
+    if (typeof q.multi !== "boolean") {
+      errors.push(`${prefix}.multi: must be a boolean`);
+    }
   }
-  return obj as T & { markdownCtx?: string };
+  return errors;
 }
 
 function sanitizeForSessionText(value: string): string {
@@ -89,11 +147,6 @@ function toSessionSafeQuestionResult(result: QuestionResult): QuestionResult {
     .map((selectedOption) => sanitizeForSessionText(selectedOption))
     .filter((selectedOption) => selectedOption.length > 0);
 
-  const rawMarkdownCtx = result.markdownCtx;
-  const markdownCtx =
-    rawMarkdownCtx == null
-      ? undefined
-      : sanitizeMultilineForSessionText(rawMarkdownCtx);
   const rawCustomInput = result.customInput;
   const customInput =
     rawCustomInput == null ? undefined : sanitizeForSessionText(rawCustomInput);
@@ -101,8 +154,7 @@ function toSessionSafeQuestionResult(result: QuestionResult): QuestionResult {
   return {
     id: sanitizeForSessionText(result.id) || "(unknown)",
     question: sanitizeForSessionText(result.question) || "(empty question)",
-    markdownCtx:
-      markdownCtx && markdownCtx.length > 0 ? markdownCtx : undefined,
+    markdownCtx: sanitizeMultilineForSessionText(result.markdownCtx),
     options: result.options.map(sanitizeOptionForSessionText),
     multi: result.multi,
     selectedOptions,
@@ -141,54 +193,6 @@ function formatQuestionResult(result: QuestionResult): string {
   return `${result.id}: ${formatSelectionForSummary(result)}`;
 }
 
-function formatQuestionContext(
-  result: QuestionResult,
-  questionIndex: number,
-): string {
-  const lines: string[] = [
-    `Question ${questionIndex + 1} (${result.id})`,
-    `Prompt: ${result.question}`,
-  ];
-
-  if (result.markdownCtx) {
-    lines.push("Context:");
-    lines.push(result.markdownCtx);
-  }
-
-  if (result.options.length > 0) {
-    lines.push("Options:");
-    for (let i = 0; i < result.options.length; i++) {
-      lines.push(`  ${i + 1}. ${result.options[i]}`);
-    }
-  }
-
-  lines.push("Response:");
-
-  const hasSelectedOptions = result.selectedOptions.length > 0;
-  const hasCustomInput = Boolean(result.customInput);
-
-  if (!hasSelectedOptions && !hasCustomInput) {
-    lines.push("  Selected: (cancelled)");
-    return lines.join("\n");
-  }
-
-  if (hasSelectedOptions) {
-    const selectedText = result.multi
-      ? `[${result.selectedOptions.join(", ")}]`
-      : result.selectedOptions[0];
-    lines.push(`  Selected: ${selectedText}`);
-  }
-
-  if (hasCustomInput) {
-    if (!hasSelectedOptions) {
-      lines.push(`  Selected: ${OTHER_OPTION}`);
-    }
-    lines.push(`  Custom input: ${result.customInput}`);
-  }
-
-  return lines.join("\n");
-}
-
 function buildAskSessionContent(results: QuestionResult[]): string {
   const safeResults = results.map(toSessionSafeQuestionResult);
   const summaryLines = safeResults.map(formatQuestionResult).join("\n");
@@ -210,7 +214,7 @@ export default function askExtension(pi: ExtensionAPI) {
           content: [
             {
               type: "text",
-              text: "Error: ask_user_questions tool requires interactive mode",
+              text: "Error: tool requires interactive mode",
             },
           ],
           details: {},
@@ -226,15 +230,20 @@ export default function askExtension(pi: ExtensionAPI) {
         };
       }
 
-      // Map the tool's markdownCtx field to the UI's description field
-      const questionsAsAskQuestions: AskQuestion[] = params.questions.map((q) => ({
-        id: q.id,
-        question: q.question,
-        description: q.markdownCtx,
-        options: q.options,
-        multi: q.multi,
-        recommended: q.recommended,
-      }));
+      const validationErrors = validateQuestions(params.questions);
+      if (validationErrors.length > 0) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Validation errors:\n${validationErrors.map((e) => `  - ${e}`).join("\n")}`,
+            },
+          ],
+          details: {},
+        };
+      }
+
+      const questionsAsAskQuestions: AskQuestion[] = params.questions;
 
       if (params.questions.length === 1) {
         const [q] = params.questions;
@@ -246,17 +255,15 @@ export default function askExtension(pi: ExtensionAPI) {
           : await askSingleQuestionWithInlineNote(ctx.ui, uiQ);
         const optionLabels = q.options.map((option) => option.label);
 
-        const result = withMarkdownCtx(
-          {
-            id: q.id,
-            question: q.question,
-            options: optionLabels,
-            multi: q.multi ?? false,
-            selectedOptions: selection.selectedOptions,
-            customInput: selection.customInput,
-          },
-          q.markdownCtx,
-        );
+        const result: QuestionResult = {
+          id: q.id,
+          question: q.question,
+          markdownCtx: q.markdownCtx,
+          options: optionLabels,
+          multi: q.multi ?? false,
+          selectedOptions: selection.selectedOptions,
+          customInput: selection.customInput,
+        };
 
         const details: AskToolDetails = {
           id: q.id,
@@ -275,23 +282,22 @@ export default function askExtension(pi: ExtensionAPI) {
       }
 
       const results: QuestionResult[] = [];
-      const tabResult = await askQuestionsWithTabs(ctx.ui, questionsAsAskQuestions);
+      const tabResult = await askQuestionsWithTabs(
+        ctx.ui,
+        questionsAsAskQuestions,
+      );
       for (let i = 0; i < params.questions.length; i++) {
         const q = params.questions[i];
         const selection = tabResult.selections[i] ?? { selectedOptions: [] };
-        results.push(
-          withMarkdownCtx(
-            {
-              id: q.id,
-              question: q.question,
-              options: q.options.map((option) => option.label),
-              multi: q.multi ?? false,
-              selectedOptions: selection.selectedOptions,
-              customInput: selection.customInput,
-            },
-            q.markdownCtx,
-          ),
-        );
+        results.push({
+          id: q.id,
+          question: q.question,
+          markdownCtx: q.markdownCtx,
+          options: q.options.map((option) => option.label),
+          multi: q.multi ?? false,
+          selectedOptions: selection.selectedOptions,
+          customInput: selection.customInput,
+        });
       }
 
       return {
