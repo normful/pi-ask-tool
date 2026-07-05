@@ -9,7 +9,6 @@ import {
 } from "./ask-logic";
 import { getLinearCursorIndexFromEditor } from "./ask-inline-editor-cursor";
 import { INLINE_NOTE_WRAP_PADDING, buildWrappedOptionLabelWithInlineNote } from "./ask-inline-note";
-import { appendWrappedTextLines } from "./ask-text-wrap";
 import {
 	alertUserOnce,
 	createMarkdownTheme,
@@ -128,10 +127,12 @@ export async function askSingleQuestionWithInlineNote(
 			alertUserOnce(alerted);
 
 			addLine(theme.fg("accent", "─".repeat(width)));
-			appendWrappedTextLines(renderedLines, questionInput.question, width, {
-				indent: 1,
-				formatLine: (line) => theme.fg("text", line),
-			});
+			const questionLines = new Markdown(questionInput.question, 0, 0, markdownTheme, {
+				color: (text) => theme.fg("text", text),
+			}).render(Math.max(1, width - 1));
+			for (const line of questionLines) {
+				addLine(` ${line}`);
+			}
 			if (questionDescriptionMarkdown) {
 				renderedLines.push("");
 				const descriptionLines = questionDescriptionMarkdown.render(Math.max(1, width - 1));

@@ -10,7 +10,6 @@ import {
 } from "./ask-logic";
 import { getLinearCursorIndexFromEditor } from "./ask-inline-editor-cursor";
 import { INLINE_NOTE_WRAP_PADDING, buildWrappedOptionLabelWithInlineNote } from "./ask-inline-note";
-import { appendWrappedTextLines } from "./ask-text-wrap";
 import {
 	alertUserOnce,
 	createMarkdownTheme,
@@ -330,10 +329,12 @@ export async function askQuestionsWithTabs(
 			const cursorOptionIndex = cursorOptionIndexByQuestion[questionIndex];
 			const selectedOptionIndexes = selectedOptionIndexesByQuestion[questionIndex];
 
-			appendWrappedTextLines(renderedLines, preparedQuestion.question, width, {
-				indent: 1,
-				formatLine: (line) => theme.fg("text", line),
-			});
+			const questionLines = new Markdown(preparedQuestion.question, 0, 0, markdownTheme, {
+				color: (text) => theme.fg("text", text),
+			}).render(Math.max(1, width - 1));
+			for (const line of questionLines) {
+				addLine(` ${line}`);
+			}
 			const questionDescriptionMarkdown = descriptionMarkdownByQuestion[questionIndex];
 			if (questionDescriptionMarkdown) {
 				renderedLines.push("");
