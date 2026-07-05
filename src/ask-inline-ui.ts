@@ -1,14 +1,5 @@
 import type { ExtensionUIContext } from "@mariozechner/pi-coding-agent";
-import {
-	Editor,
-	Markdown,
-	type EditorTheme,
-	type MarkdownTheme,
-	Key,
-	matchesKey,
-	truncateToWidth,
-	visibleWidth,
-} from "@mariozechner/pi-tui";
+import { Editor, Markdown, type EditorTheme, Key, matchesKey, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import {
 	OTHER_OPTION,
 	appendRecommendedTagToOptionLabels,
@@ -19,6 +10,13 @@ import {
 import { getLinearCursorIndexFromEditor } from "./ask-inline-editor-cursor";
 import { INLINE_NOTE_WRAP_PADDING, buildWrappedOptionLabelWithInlineNote } from "./ask-inline-note";
 import { appendWrappedTextLines } from "./ask-text-wrap";
+import {
+	alertUserOnce,
+	createMarkdownTheme,
+	createRenderCache,
+	handleNoteEditorInput,
+	requestRerender,
+} from "./ask-ui-shared";
 
 interface SingleQuestionInput {
 	question: string;
@@ -60,9 +58,8 @@ export async function askSingleQuestionWithInlineNote(
 	const result = await ui.custom<InlineSelectionResult>((tui, theme, _keybindings, done) => {
 		let cursorOptionIndex = initialCursorIndex;
 		let isNoteEditorOpen = false;
-		let cachedRenderedLines: string[] | undefined;
-		let cachedRenderedWidth: number | undefined;
-		let alertedUser = false;
+		const cache = createRenderCache();
+		const alerted = { value: false };
 		const noteByOptionIndex = new Map<number, string>();
 
 		const editorTheme: EditorTheme = {
@@ -76,22 +73,7 @@ export async function askSingleQuestionWithInlineNote(
 			},
 		};
 		const noteEditor = new Editor(tui, editorTheme);
-		const markdownTheme: MarkdownTheme = {
-			heading: (text) => theme.fg("mdHeading", text),
-			link: (text) => theme.fg("mdLink", text),
-			linkUrl: (text) => theme.fg("mdLinkUrl", text),
-			code: (text) => theme.fg("mdCode", text),
-			codeBlock: (text) => theme.fg("mdCodeBlock", text),
-			codeBlockBorder: (text) => theme.fg("mdCodeBlockBorder", text),
-			quote: (text) => theme.fg("mdQuote", text),
-			quoteBorder: (text) => theme.fg("mdQuoteBorder", text),
-			hr: (text) => theme.fg("mdHr", text),
-			listBullet: (text) => theme.fg("mdListBullet", text),
-			bold: (text) => theme.bold(text),
-			italic: (text) => theme.italic(text),
-			strikethrough: (text) => theme.strikethrough(text),
-			underline: (text) => theme.underline(text),
-		};
+		const markdownTheme = createMarkdownTheme(theme);
 		const questionDescriptionMarkdown =
 			questionInput.description && questionInput.description.trim().length > 0
 				? new Markdown(questionInput.description, 0, 0, markdownTheme, {
@@ -99,11 +81,7 @@ export async function askSingleQuestionWithInlineNote(
 					})
 				: undefined;
 
-		const requestUiRerender = () => {
-			cachedRenderedLines = undefined;
-			cachedRenderedWidth = undefined;
-			tui.requestRender();
-		};
+		const rerender = () => requestRerender(tui, cache);
 
 		const getRawNoteForOption = (optionIndex: number): string => noteByOptionIndex.get(optionIndex) ?? "";
 		const getTrimmedNoteForOption = (optionIndex: number): string => getRawNoteForOption(optionIndex).trim();
@@ -134,7 +112,7 @@ export async function askSingleQuestionWithInlineNote(
 			const trimmedNote = value.trim();
 
 			if (selectedOptionLabel === OTHER_OPTION && !trimmedNote) {
-				requestUiRerender();
+				rerender();
 				return;
 			}
 
@@ -142,17 +120,12 @@ export async function askSingleQuestionWithInlineNote(
 		};
 
 		const render = (width: number): string[] => {
-			if (cachedRenderedLines && cachedRenderedWidth === width) return cachedRenderedLines;
+			if (cache.cachedRenderedLines && cache.cachedRenderedWidth === width) return cache.cachedRenderedLines;
 
 			const renderedLines: string[] = [];
 			const addLine = (line: string) => renderedLines.push(truncateToWidth(line, width));
 
-			// Alert user on first render only: BEL + terminal notification (OSC 777)
-			if (!alertedUser) {
-				alertedUser = true;
-				process.stdout.write("\x07");
-				process.stdout.write("\x1b]777;notify;Pi Ask;Questions awaiting your answer\x07");
-			}
+			alertUserOnce(alerted);
 
 			addLine(theme.fg("accent", "─".repeat(width)));
 			appendWrappedTextLines(renderedLines, questionInput.question, width, {
@@ -207,8 +180,8 @@ export async function askSingleQuestionWithInlineNote(
 			}
 
 			addLine(theme.fg("accent", "─".repeat(width)));
-			cachedRenderedLines = renderedLines;
-			cachedRenderedWidth = width;
+			cache.cachedRenderedLines = renderedLines;
+			cache.cachedRenderedWidth = width;
 			return renderedLines;
 		};
 
@@ -219,36 +192,30 @@ export async function askSingleQuestionWithInlineNote(
 			}
 
 			if (isNoteEditorOpen) {
-				if (matchesKey(data, Key.tab) || matchesKey(data, Key.escape)) {
-					isNoteEditorOpen = false;
-					requestUiRerender();
-					return;
-				}
-				if (matchesKey(data, Key.f7)) {
-					noteEditor.setText("");
-					requestUiRerender();
-					return;
-				}
-				noteEditor.handleInput(data);
-				requestUiRerender();
+				handleNoteEditorInput(data, noteEditor, {
+					onCloseEditor: () => {
+						isNoteEditorOpen = false;
+					},
+					requestRerender: rerender,
+				});
 				return;
 			}
 
 			if (matchesKey(data, Key.up)) {
 				cursorOptionIndex = Math.max(0, cursorOptionIndex - 1);
-				requestUiRerender();
+				rerender();
 				return;
 			}
 			if (matchesKey(data, Key.down)) {
 				cursorOptionIndex = Math.min(selectableOptionLabels.length - 1, cursorOptionIndex + 1);
-				requestUiRerender();
+				rerender();
 				return;
 			}
 
 			if (matchesKey(data, Key.tab)) {
 				isNoteEditorOpen = true;
 				loadCurrentNoteIntoEditor();
-				requestUiRerender();
+				rerender();
 				return;
 			}
 
@@ -259,7 +226,7 @@ export async function askSingleQuestionWithInlineNote(
 				if (selectedOptionLabel === OTHER_OPTION && !trimmedNote) {
 					isNoteEditorOpen = true;
 					loadCurrentNoteIntoEditor();
-					requestUiRerender();
+					rerender();
 					return;
 				}
 
@@ -275,8 +242,8 @@ export async function askSingleQuestionWithInlineNote(
 		return {
 			render,
 			invalidate: () => {
-				cachedRenderedLines = undefined;
-				cachedRenderedWidth = undefined;
+				cache.cachedRenderedLines = undefined;
+				cache.cachedRenderedWidth = undefined;
 			},
 			handleInput,
 		};

@@ -113,7 +113,7 @@ describe("askSingleQuestionWithInlineNote interactive branches", () => {
 				component.handleInput("\u001b[B");
 				component.invalidate();
 				component.render(80);
-				component.handleInput("\u001b");
+				component.handleInput("\u001b[17~");
 				return result;
 			},
 		} as unknown as ExtensionUIContext;
@@ -121,6 +121,35 @@ describe("askSingleQuestionWithInlineNote interactive branches", () => {
 		const result = await askSingleQuestionWithInlineNote(ui, {
 			question: "Pick one",
 			options: [{ label: "A" }, { label: "B" }],
+		});
+
+		expect(result).toEqual({ selectedOptions: [] });
+	});
+
+	it("clears inline note text with F7 in note editor and cancels", async () => {
+		const ui = {
+			custom: async (factory: any) => {
+				const tui = { requestRender() {} };
+				const theme = createFakeTheme();
+				let result: any;
+				const done = (value: any) => {
+					result = value;
+				};
+
+				const component = await factory(tui, theme, {}, done);
+				component.render(40);
+				component.handleInput("\t");
+				for (const ch of "note") component.handleInput(ch);
+				component.handleInput("\u001b[18~");
+				component.handleInput("\t");
+				component.handleInput("\u001b[17~");
+				return result;
+			},
+		} as unknown as ExtensionUIContext;
+
+		const result = await askSingleQuestionWithInlineNote(ui, {
+			question: "F7 clear test",
+			options: [{ label: "A" }],
 		});
 
 		expect(result).toEqual({ selectedOptions: [] });
@@ -335,7 +364,7 @@ describe("askQuestionsWithTabs interactive branches", () => {
 		});
 	});
 
-	it("covers submit-tab validation warning and cancel via Esc", async () => {
+	it("covers submit-tab validation warning and cancel via F6", async () => {
 		const ui = {
 			custom: async (factory: any) => {
 				const tui = { requestRender() {} };
@@ -351,7 +380,7 @@ describe("askQuestionsWithTabs interactive branches", () => {
 				const submitWarning = component.render(32).join("\n");
 				expect(submitWarning).toContain("Complete required answers");
 				component.handleInput("\r");
-				component.handleInput("\u001b");
+				component.handleInput("\u001b[17~");
 				return result;
 			},
 		} as unknown as ExtensionUIContext;
@@ -367,7 +396,38 @@ describe("askQuestionsWithTabs interactive branches", () => {
 		});
 	});
 
-	it("covers cancel via Esc on question tab and invalidate", async () => {
+	it("clears note text with F7 in tab note editor and cancels", async () => {
+		const ui = {
+			custom: async (factory: any) => {
+				const tui = { requestRender() {} };
+				const theme = createFakeTheme();
+				let result: any;
+				const done = (value: any) => {
+					result = value;
+				};
+
+				const component = await factory(tui, theme, {}, done);
+				component.render(40);
+				component.handleInput("\t");
+				for (const ch of "draft") component.handleInput(ch);
+				component.handleInput("\u001b[18~");
+				component.handleInput("\t");
+				component.handleInput("\u001b[17~");
+				return result;
+			},
+		} as unknown as ExtensionUIContext;
+
+		const result = await askQuestionsWithTabs(ui, [
+			{ id: "q1", question: "Q1", options: [{ label: "A" }] },
+		]);
+
+		expect(result).toEqual({
+			cancelled: true,
+			selections: [{ selectedOptions: [] }],
+		});
+	});
+
+	it("covers cancel via F6 on question tab and invalidate", async () => {
 		const ui = {
 			custom: async (factory: any) => {
 				const tui = { requestRender() {} };
@@ -381,7 +441,7 @@ describe("askQuestionsWithTabs interactive branches", () => {
 				component.render(32);
 				component.invalidate();
 				component.render(32);
-				component.handleInput("\u001b");
+				component.handleInput("\u001b[17~");
 				return result;
 			},
 		} as unknown as ExtensionUIContext;

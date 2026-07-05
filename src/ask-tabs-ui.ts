@@ -1,14 +1,5 @@
 import type { ExtensionUIContext } from "@mariozechner/pi-coding-agent";
-import {
-	Editor,
-	Markdown,
-	type EditorTheme,
-	type MarkdownTheme,
-	Key,
-	matchesKey,
-	truncateToWidth,
-	visibleWidth,
-} from "@mariozechner/pi-tui";
+import { Editor, Markdown, type EditorTheme, Key, matchesKey, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
 import {
 	OTHER_OPTION,
 	appendRecommendedTagToOptionLabels,
@@ -20,6 +11,13 @@ import {
 import { getLinearCursorIndexFromEditor } from "./ask-inline-editor-cursor";
 import { INLINE_NOTE_WRAP_PADDING, buildWrappedOptionLabelWithInlineNote } from "./ask-inline-note";
 import { appendWrappedTextLines } from "./ask-text-wrap";
+import {
+	alertUserOnce,
+	createMarkdownTheme,
+	createRenderCache,
+	handleNoteEditorInput,
+	requestRerender,
+} from "./ask-ui-shared";
 
 interface PreparedQuestion {
 	id: string;
@@ -147,9 +145,8 @@ export async function askQuestionsWithTabs(
 	const result = await ui.custom<TabsUIState>((tui, theme, _keybindings, done) => {
 		let activeTabIndex = 0;
 		let isNoteEditorOpen = false;
-		let cachedRenderedLines: string[] | undefined;
-		let cachedRenderedWidth: number | undefined;
-		let alertedUser = false;
+		const cache = createRenderCache();
+		const alerted = { value: false };
 		const cursorOptionIndexByQuestion = [...initialCursorOptionIndexByQuestion];
 		const selectedOptionIndexesByQuestion = preparedQuestions.map(() => [] as number[]);
 		const noteByQuestionByOption = preparedQuestions.map((preparedQuestion) =>
@@ -167,22 +164,7 @@ export async function askQuestionsWithTabs(
 			},
 		};
 		const noteEditor = new Editor(tui, editorTheme);
-		const markdownTheme: MarkdownTheme = {
-			heading: (text) => theme.fg("mdHeading", text),
-			link: (text) => theme.fg("mdLink", text),
-			linkUrl: (text) => theme.fg("mdLinkUrl", text),
-			code: (text) => theme.fg("mdCode", text),
-			codeBlock: (text) => theme.fg("mdCodeBlock", text),
-			codeBlockBorder: (text) => theme.fg("mdCodeBlockBorder", text),
-			quote: (text) => theme.fg("mdQuote", text),
-			quoteBorder: (text) => theme.fg("mdQuoteBorder", text),
-			hr: (text) => theme.fg("mdHr", text),
-			listBullet: (text) => theme.fg("mdListBullet", text),
-			bold: (text) => theme.bold(text),
-			italic: (text) => theme.italic(text),
-			strikethrough: (text) => theme.strikethrough(text),
-			underline: (text) => theme.underline(text),
-		};
+		const markdownTheme = createMarkdownTheme(theme);
 		const descriptionMarkdownByQuestion = preparedQuestions.map((preparedQuestion) =>
 			preparedQuestion.description && preparedQuestion.description.trim().length > 0
 				? new Markdown(preparedQuestion.description, 0, 0, markdownTheme, {
@@ -193,11 +175,7 @@ export async function askQuestionsWithTabs(
 
 		const submitTabIndex = preparedQuestions.length;
 
-		const requestUiRerender = () => {
-			cachedRenderedLines = undefined;
-			cachedRenderedWidth = undefined;
-			tui.requestRender();
-		};
+		const rerender = () => requestRerender(tui, cache);
 
 		const getActiveQuestionIndex = (): number | null => {
 			if (activeTabIndex >= preparedQuestions.length) return null;
@@ -226,7 +204,7 @@ export async function askQuestionsWithTabs(
 			isNoteEditorOpen = true;
 			const optionIndex = cursorOptionIndexByQuestion[questionIndex];
 			noteEditor.setText(getQuestionNote(questionIndex, optionIndex));
-			requestUiRerender();
+			rerender();
 		};
 
 		const advanceToNextTabOrSubmit = () => {
@@ -257,23 +235,23 @@ export async function askQuestionsWithTabs(
 					);
 				}
 				if (optionIndex === preparedQuestion.otherOptionIndex && trimmedNote.length === 0) {
-					requestUiRerender();
+					rerender();
 					return;
 				}
 				isNoteEditorOpen = false;
-				requestUiRerender();
+				rerender();
 				return;
 			}
 
 			selectedOptionIndexesByQuestion[questionIndex] = [optionIndex];
 			if (optionIndex === preparedQuestion.otherOptionIndex && trimmedNote.length === 0) {
-				requestUiRerender();
+				rerender();
 				return;
 			}
 
 			isNoteEditorOpen = false;
 			advanceToNextTabOrSubmit();
-			requestUiRerender();
+			rerender();
 		};
 
 		const renderTabs = (): string => {
@@ -416,17 +394,12 @@ export async function askQuestionsWithTabs(
 		};
 
 		const render = (width: number): string[] => {
-			if (cachedRenderedLines && cachedRenderedWidth === width) return cachedRenderedLines;
+			if (cache.cachedRenderedLines && cache.cachedRenderedWidth === width) return cache.cachedRenderedLines;
 
 			const renderedLines: string[] = [];
 			const addLine = (line: string) => renderedLines.push(truncateToWidth(line, width));
 
-			// Alert user on first render only: BEL + terminal notification (OSC 777)
-			if (!alertedUser) {
-				alertedUser = true;
-				process.stdout.write("\x07");
-				process.stdout.write("\x1b]777;notify;Pi Ask;Questions awaiting your answer\x07");
-			}
+			alertUserOnce(alerted);
 
 			addLine(theme.fg("accent", "─".repeat(width)));
 			addLine(` ${renderTabs()}`);
@@ -439,8 +412,8 @@ export async function askQuestionsWithTabs(
 			}
 
 			addLine(theme.fg("accent", "─".repeat(width)));
-			cachedRenderedLines = renderedLines;
-			cachedRenderedWidth = width;
+			cache.cachedRenderedLines = renderedLines;
+			cache.cachedRenderedWidth = width;
 			return renderedLines;
 		};
 
@@ -451,30 +424,24 @@ export async function askQuestionsWithTabs(
 			}
 
 			if (isNoteEditorOpen) {
-				if (matchesKey(data, Key.tab) || matchesKey(data, Key.escape)) {
-					isNoteEditorOpen = false;
-					requestUiRerender();
-					return;
-				}
-				if (matchesKey(data, Key.f7)) {
-					noteEditor.setText("");
-					requestUiRerender();
-					return;
-				}
-				noteEditor.handleInput(data);
-				requestUiRerender();
+				handleNoteEditorInput(data, noteEditor, {
+					onCloseEditor: () => {
+						isNoteEditorOpen = false;
+					},
+					requestRerender: rerender,
+				});
 				return;
 			}
 
 			if (matchesKey(data, Key.left)) {
 				activeTabIndex = (activeTabIndex - 1 + preparedQuestions.length + 1) % (preparedQuestions.length + 1);
-				requestUiRerender();
+				rerender();
 				return;
 			}
 
 			if (matchesKey(data, Key.right)) {
 				activeTabIndex = (activeTabIndex + 1) % (preparedQuestions.length + 1);
-				requestUiRerender();
+				rerender();
 				return;
 			}
 
@@ -494,7 +461,7 @@ export async function askQuestionsWithTabs(
 
 			if (matchesKey(data, Key.up)) {
 				cursorOptionIndexByQuestion[questionIndex] = Math.max(0, cursorOptionIndexByQuestion[questionIndex] - 1);
-				requestUiRerender();
+				rerender();
 				return;
 			}
 
@@ -503,7 +470,7 @@ export async function askQuestionsWithTabs(
 					preparedQuestion.options.length - 1,
 					cursorOptionIndexByQuestion[questionIndex] + 1,
 				);
-				requestUiRerender();
+				rerender();
 				return;
 			}
 
@@ -532,7 +499,7 @@ export async function askQuestionsWithTabs(
 						return;
 					}
 
-					requestUiRerender();
+					rerender();
 					return;
 				}
 
@@ -546,7 +513,7 @@ export async function askQuestionsWithTabs(
 				}
 
 				advanceToNextTabOrSubmit();
-				requestUiRerender();
+				rerender();
 				return;
 			}
 
@@ -558,8 +525,8 @@ export async function askQuestionsWithTabs(
 		return {
 			render,
 			invalidate: () => {
-				cachedRenderedLines = undefined;
-				cachedRenderedWidth = undefined;
+				cache.cachedRenderedLines = undefined;
+				cache.cachedRenderedWidth = undefined;
 			},
 			handleInput,
 		};
