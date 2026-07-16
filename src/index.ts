@@ -199,11 +199,45 @@ function buildAskSessionContent(results: QuestionResult[]): string {
   return `User answers:\n${summaryLines}`;
 }
 
+const ASK_TOOL_NAME = "socrates";
 const ASK_TOOL_DESCRIPTION = "ALWAYS use this tool to ask user questions";
+
+async function tellHerdrWeHaveAQuestion(pi: ExtensionAPI) {
+  pi.events.emit("herdr:blocked", { active: true, label: ASK_TOOL_NAME });
+  /*
+  const paneId = process.env.HERDR_PANE_ID || "";
+  const workspaceId = process.env.HERDR_WORKSPACE_ID || "";
+  const tabId = process.env.HERDR_TAB_ID || "";
+  if (paneId && workspaceId && tabId) {
+    const [wsResult, tabResult] = await Promise.all([
+      pi.exec("herdr", ["workspace", "get", workspaceId]),
+      pi.exec("herdr", ["tab", "get", tabId]),
+    ]);
+    try {
+      const wsInfo = JSON.parse(wsResult.stdout);
+      const tabInfo = JSON.parse(tabResult.stdout);
+      const wsLabel = wsInfo?.result?.workspace?.label;
+      const tabLabel = tabInfo?.result?.tab?.label;
+      if (wsLabel && tabLabel) {
+        pi.exec("herdr", [
+          "notification", "show", `${wsLabel}`,
+          "--body", `${tabLabel} question`,
+        ]);
+      }
+    } catch {
+      // skip notification on parse failure
+    }
+  }
+  */
+}
+
+async function tellHerdrWeAreDone(pi: ExtensionAPI) {
+  pi.events.emit("herdr:blocked", { active: false, label: ASK_TOOL_NAME });
+}
 
 export default function askExtension(pi: ExtensionAPI) {
   pi.registerTool({
-    name: "socrates",
+    name: ASK_TOOL_NAME,
     label: "Socrates",
     description: ASK_TOOL_DESCRIPTION,
     parameters: AskParamsSchema,
@@ -248,11 +282,24 @@ export default function askExtension(pi: ExtensionAPI) {
       if (params.questions.length === 1) {
         const [q] = params.questions;
         const uiQ = questionsAsAskQuestions[0];
-        const selection = q.multi
-          ? ((await askQuestionsWithTabs(ctx.ui, [uiQ])).selections[0] ?? {
-              selectedOptions: [],
-            })
-          : await askSingleQuestionWithInlineNote(ctx.ui, uiQ);
+
+        // Notify Herdr that the agent is blocked waiting for user input
+        tellHerdrWeHaveAQuestion(pi);
+
+        if (q.multi) {
+          const multiResult = (await askQuestionsWithTabs(ctx.ui, [uiQ]))
+            .selections[0] ?? { selectedOptions: [] };
+          var selection = multiResult;
+        } else {
+          const singleResult = await askSingleQuestionWithInlineNote(
+            ctx.ui,
+            uiQ,
+          );
+          var selection = singleResult;
+        }
+
+        // Notify Herdr that the agent is back to idle
+        tellHerdrWeAreDone(pi);
         const optionLabels = q.options.map((option) => option.label);
 
         const result: QuestionResult = {
@@ -282,10 +329,12 @@ export default function askExtension(pi: ExtensionAPI) {
       }
 
       const results: QuestionResult[] = [];
+      tellHerdrWeHaveAQuestion(pi);
       const tabResult = await askQuestionsWithTabs(
         ctx.ui,
         questionsAsAskQuestions,
       );
+      tellHerdrWeAreDone(pi);
       for (let i = 0; i < params.questions.length; i++) {
         const q = params.questions[i];
         const selection = tabResult.selections[i] ?? { selectedOptions: [] };
