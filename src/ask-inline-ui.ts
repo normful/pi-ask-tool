@@ -67,8 +67,8 @@ export async function askSingleQuestionWithInlineNote(
 				selectedPrefix: (text) => theme.fg("accent", text),
 				selectedText: (text) => theme.fg("accent", text),
 				description: (text) => theme.fg("muted", text),
-				scrollInfo: (text) => theme.fg("dim", text),
-				noMatch: (text) => theme.fg("warning", text),
+				scrollInfo: (text) => theme.fg("customMessageLabel", text),
+				noMatch: (text) => theme.fg("error", text),
 			},
 		};
 		const noteEditor = new Editor(tui, editorTheme);
@@ -76,7 +76,7 @@ export async function askSingleQuestionWithInlineNote(
 		const questionDescriptionMarkdown =
 			questionInput.markdownCtx && questionInput.markdownCtx.trim().length > 0
 				? new Markdown(questionInput.markdownCtx, 0, 0, markdownTheme, {
-						color: (text) => theme.fg("muted", text),
+						color: (text) => theme.fg("text", text),
 					})
 				: undefined;
 
@@ -128,7 +128,7 @@ export async function askSingleQuestionWithInlineNote(
 
 			addLine(theme.fg("accent", "─".repeat(width)));
 			const questionLines = new Markdown(questionInput.question, 0, 0, markdownTheme, {
-				color: (text) => theme.fg("text", text),
+				color: (text) => theme.fg("syntaxString", text),
 			}).render(Math.max(1, width - 1));
 			for (const line of questionLines) {
 				addLine(` ${line}`);
@@ -178,11 +178,11 @@ export async function askSingleQuestionWithInlineNote(
 			renderedLines.push("");
 
 			if (isNoteEditorOpen) {
-				addLine(theme.fg("dim", " Typing note inline • Enter submit • Tab/Esc stop editing • F7 clear text"));
+				addLine(theme.fg("customMessageLabel", " Typing note inline • Enter submit • Tab/Esc stop editing • F7 clear text"));
 			} else if (getTrimmedNoteForOption(cursorOptionIndex).length > 0) {
-				addLine(theme.fg("dim", " ↑↓ move • Enter submit • Tab edit note • F6 exit entirely"));
+				addLine(theme.fg("customMessageLabel", " ↑↓ move • Enter submit • Tab edit note • F6 exit entirely"));
 			} else {
-				addLine(theme.fg("dim", " ↑↓ move • Enter submit • Tab add note • F6 exit entirely"));
+				addLine(theme.fg("customMessageLabel", " ↑↓ move • Enter submit • Tab add note • F6 exit entirely"));
 			}
 
 			addLine(theme.fg("accent", "─".repeat(width)));

@@ -158,8 +158,8 @@ export async function askQuestionsWithTabs(
 				selectedPrefix: (text) => theme.fg("accent", text),
 				selectedText: (text) => theme.fg("accent", text),
 				description: (text) => theme.fg("syntaxFunction", text),
-				scrollInfo: (text) => theme.fg("syntaxType", text),
-				noMatch: (text) => theme.fg("warning", text),
+				scrollInfo: (text) => theme.fg("customMessageLabel", text),
+				noMatch: (text) => theme.fg("error", text),
 			},
 		};
 		const noteEditor = new Editor(tui, editorTheme);
@@ -167,7 +167,7 @@ export async function askQuestionsWithTabs(
 		const descriptionMarkdownByQuestion = preparedQuestions.map((preparedQuestion) =>
 			preparedQuestion.markdownCtx && preparedQuestion.markdownCtx.trim().length > 0
 				? new Markdown(preparedQuestion.markdownCtx, 0, 0, markdownTheme, {
-						color: (text) => theme.fg("syntaxFunction", text),
+						color: (text) => theme.fg("text", text),
 					})
 				: undefined,
 		);
@@ -276,7 +276,7 @@ export async function askQuestionsWithTabs(
 			const submitLabel = " ✓ Submit ";
 			const styledSubmitLabel = isSubmitTabActive
 				? theme.bg("selectedBg", theme.fg("text", submitLabel))
-				: theme.fg(canSubmit ? "success" : "syntaxType", submitLabel);
+				: theme.fg(canSubmit ? "success" : "customMessageLabel", submitLabel);
 			tabParts.push(`${styledSubmitLabel} →`);
 			return tabParts.join("");
 		};
@@ -300,7 +300,7 @@ export async function askQuestionsWithTabs(
 					selectedOptionIndexesByQuestion[questionIndex],
 					noteByQuestionByOption[questionIndex],
 				);
-				const statusIcon = isValid ? theme.fg("success", "●") : theme.fg("warning", "○");
+				const statusIcon = isValid ? theme.fg("success", "●") : theme.fg("error", "○");
 				addLine(` ${statusIcon} ${theme.fg("syntaxFunction", `${preparedQuestion.tabLabel}:`)} ${theme.fg("text", value)}`);
 			}
 
@@ -318,9 +318,9 @@ export async function askQuestionsWithTabs(
 					)
 					.map((preparedQuestion) => preparedQuestion.tabLabel)
 					.join(", ");
-				addLine(theme.fg("warning", ` Complete required answers: ${missingQuestions}`));
+				addLine(theme.fg("error", ` Complete required answers: ${missingQuestions}`));
 			}
-			addLine(theme.fg("syntaxType", " ←/→ switch tabs • F6 exit entirely"));
+			addLine(theme.fg("customMessageLabel", " ←/→ switch tabs • F6 exit entirely"));
 		};
 
 		const renderQuestionTab = (width: number, renderedLines: string[], questionIndex: number): void => {
@@ -330,7 +330,7 @@ export async function askQuestionsWithTabs(
 			const selectedOptionIndexes = selectedOptionIndexesByQuestion[questionIndex];
 
 			const questionLines = new Markdown(preparedQuestion.question, 0, 0, markdownTheme, {
-				color: (text) => theme.fg("text", text),
+				color: (text) => theme.fg("syntaxString", text),
 			}).render(Math.max(1, width - 1));
 			for (const line of questionLines) {
 				addLine(` ${line}`);
@@ -382,18 +382,18 @@ export async function askQuestionsWithTabs(
 
 			renderedLines.push("");
 			if (isNoteEditorOpen) {
-				addLine(theme.fg("syntaxType", " Typing note inline • Enter save note • Tab/Esc stop editing • F7 clear text"));
+				addLine(theme.fg("customMessageLabel", " Typing note inline • Enter save note • Tab/Esc stop editing • F7 clear text"));
 			} else {
 				if (preparedQuestion.multi) {
 					addLine(
 						theme.fg(
-							"syntaxType",
+							"customMessageLabel",
 							" ↑↓ move • Enter toggle/select • Tab add note • ←/→ switch tabs • F6 exit entirely",
 						),
 					);
 				} else {
 					addLine(
-						theme.fg("syntaxType", " ↑↓ move • Enter select • Tab add note • ←/→ switch tabs • F6 exit entirely"),
+						theme.fg("customMessageLabel", " ↑↓ move • Enter select • Tab add note • ←/→ switch tabs • F6 exit entirely"),
 					);
 				}
 			}
