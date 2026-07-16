@@ -1,4 +1,4 @@
-import { truncateToWidth, wrapTextWithAnsi } from "@mariozechner/pi-tui";
+import { truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
 
 interface AppendWrappedTextOptions {
 	indent?: number;

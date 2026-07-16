@@ -1,4 +1,4 @@
-import { wrapTextWithAnsi } from "@mariozechner/pi-tui";
+import { wrapTextWithAnsi } from "@earendil-works/pi-tui";
 
 const INLINE_NOTE_SEPARATOR = " — note: ";
 const INLINE_EDIT_CURSOR_INVERT_ON = "\u001b[7m";

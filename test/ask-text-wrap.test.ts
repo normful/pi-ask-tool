@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { visibleWidth } from "@mariozechner/pi-tui";
+import { visibleWidth } from "@earendil-works/pi-tui";
 import { appendWrappedTextLines } from "../src/ask-text-wrap";
 
 describe("appendWrappedTextLines", () => {

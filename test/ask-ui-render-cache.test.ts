@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
-import type { ExtensionUIContext } from "@mariozechner/pi-coding-agent";
-import { visibleWidth } from "@mariozechner/pi-tui";
+import type { ExtensionUIContext } from "@earendil-works/pi-coding-agent";
+import { visibleWidth } from "@earendil-works/pi-tui";
 import type { AskQuestion } from "../src/ask-logic";
 import { askSingleQuestionWithInlineNote } from "../src/ask-inline-ui";
 import { askQuestionsWithTabs } from "../src/ask-tabs-ui";

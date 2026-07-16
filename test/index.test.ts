@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { ExtensionAPI, ExtensionUIContext, ToolDefinition } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionUIContext, ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { OTHER_OPTION } from "../src/ask-logic";
 import askExtension from "../src/index";
 

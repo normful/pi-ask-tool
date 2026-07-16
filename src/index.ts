@@ -1,6 +1,6 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { Type, type Static } from "@sinclair/typebox";
-import { OTHER_OPTION, type AskQuestion } from "./ask-logic";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Type, type Static } from "typebox";
+import { type AskQuestion } from "./ask-logic";
 import { askSingleQuestionWithInlineNote } from "./ask-inline-ui";
 import { askQuestionsWithTabs } from "./ask-tabs-ui";
 
@@ -99,12 +99,12 @@ function validateQuestions(questions: AskParams["questions"]): string[] {
       }
 
       // recommended: required finite number within option bounds
-      if (typeof q.recommended !== "number" || !Number.isFinite(q.recommended)) {
-        errors.push(`${prefix}.recommended: must be a finite number`);
-      } else if (
-        q.recommended < 0 ||
-        q.recommended >= q.options.length
+      if (
+        typeof q.recommended !== "number" ||
+        !Number.isFinite(q.recommended)
       ) {
+        errors.push(`${prefix}.recommended: must be a finite number`);
+      } else if (q.recommended < 0 || q.recommended >= q.options.length) {
         errors.push(
           `${prefix}.recommended: must be between 0 and ${q.options.length - 1}`,
         );

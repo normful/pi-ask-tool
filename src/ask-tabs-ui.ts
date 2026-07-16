@@ -1,5 +1,5 @@
-import type { ExtensionUIContext } from "@mariozechner/pi-coding-agent";
-import { Editor, Markdown, type EditorTheme, Key, matchesKey, truncateToWidth, visibleWidth } from "@mariozechner/pi-tui";
+import type { ExtensionUIContext } from "@earendil-works/pi-coding-agent";
+import { Editor, Markdown, type EditorTheme, Key, matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import {
 	OTHER_OPTION,
 	appendRecommendedTagToOptionLabels,

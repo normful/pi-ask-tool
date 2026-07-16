@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import type { ExtensionUIContext } from "@mariozechner/pi-coding-agent";
+import type { ExtensionUIContext } from "@earendil-works/pi-coding-agent";
 import { OTHER_OPTION, type AskQuestion } from "../src/ask-logic";
 import { askSingleQuestionWithInlineNote } from "../src/ask-inline-ui";
 import { askQuestionsWithTabs, formatSelectionForSubmitReview } from "../src/ask-tabs-ui";

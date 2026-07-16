@@ -1,4 +1,4 @@
-import { Key, matchesKey, type MarkdownTheme } from "@mariozechner/pi-tui";
+import { Key, matchesKey, type MarkdownTheme } from "@earendil-works/pi-tui";
 
 // ── Render cache ──────────────────────────────────────────────────────────
 
