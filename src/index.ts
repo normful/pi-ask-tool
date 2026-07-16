@@ -41,22 +41,10 @@ type AskParams = Static<typeof AskParamsSchema>;
 interface QuestionResult {
   id: string;
   question: string;
-  markdownCtx: string;
   options: string[];
   multi: boolean;
   selectedOptions: string[];
   customInput?: string;
-}
-
-interface AskToolDetails {
-  id?: string;
-  question?: string;
-  markdownCtx?: string;
-  options?: string[];
-  multi?: boolean;
-  selectedOptions?: string[];
-  customInput?: string;
-  results?: QuestionResult[];
 }
 
 function validateQuestions(questions: AskParams["questions"]): string[] {
@@ -127,22 +115,12 @@ function sanitizeForSessionText(value: string): string {
     .trim();
 }
 
-function sanitizeMultilineForSessionText(value: string): string {
-  return value
-    .replace(/\r\n/g, "\n")
-    .replace(/\r/g, "\n")
-    .split("\n")
-    .map((line) => sanitizeForSessionText(line))
-    .join("\n")
-    .trim();
-}
-
 function sanitizeOptionForSessionText(option: string): string {
   const sanitizedOption = sanitizeForSessionText(option);
   return sanitizedOption.length > 0 ? sanitizedOption : "(empty option)";
 }
 
-function toSessionSafeQuestionResult(result: QuestionResult): QuestionResult {
+function toSessionSafeQuestionResult(result: QuestionResult) {
   const selectedOptions = result.selectedOptions
     .map((selectedOption) => sanitizeForSessionText(selectedOption))
     .filter((selectedOption) => selectedOption.length > 0);
@@ -154,7 +132,6 @@ function toSessionSafeQuestionResult(result: QuestionResult): QuestionResult {
   return {
     id: sanitizeForSessionText(result.id) || "(unknown)",
     question: sanitizeForSessionText(result.question) || "(empty question)",
-    markdownCtx: sanitizeMultilineForSessionText(result.markdownCtx),
     options: result.options.map(sanitizeOptionForSessionText),
     multi: result.multi,
     selectedOptions,
@@ -163,7 +140,9 @@ function toSessionSafeQuestionResult(result: QuestionResult): QuestionResult {
   };
 }
 
-function formatSelectionForSummary(result: QuestionResult): string {
+function formatSelectionForSummary(
+  result: Pick<QuestionResult, "selectedOptions" | "customInput" | "multi">,
+): string {
   const hasSelectedOptions = result.selectedOptions.length > 0;
   const hasCustomInput = Boolean(result.customInput);
 
@@ -189,7 +168,12 @@ function formatSelectionForSummary(result: QuestionResult): string {
   return result.selectedOptions[0];
 }
 
-function formatQuestionResult(result: QuestionResult): string {
+function formatQuestionResult(
+  result: Pick<
+    QuestionResult,
+    "id" | "selectedOptions" | "customInput" | "multi"
+  >,
+): string {
   return `${result.id}: ${formatSelectionForSummary(result)}`;
 }
 
@@ -204,31 +188,6 @@ const ASK_TOOL_DESCRIPTION = "ALWAYS use this tool to ask user questions";
 
 async function tellHerdrWeHaveAQuestion(pi: ExtensionAPI) {
   pi.events.emit("herdr:blocked", { active: true, label: ASK_TOOL_NAME });
-  /*
-  const paneId = process.env.HERDR_PANE_ID || "";
-  const workspaceId = process.env.HERDR_WORKSPACE_ID || "";
-  const tabId = process.env.HERDR_TAB_ID || "";
-  if (paneId && workspaceId && tabId) {
-    const [wsResult, tabResult] = await Promise.all([
-      pi.exec("herdr", ["workspace", "get", workspaceId]),
-      pi.exec("herdr", ["tab", "get", tabId]),
-    ]);
-    try {
-      const wsInfo = JSON.parse(wsResult.stdout);
-      const tabInfo = JSON.parse(tabResult.stdout);
-      const wsLabel = wsInfo?.result?.workspace?.label;
-      const tabLabel = tabInfo?.result?.tab?.label;
-      if (wsLabel && tabLabel) {
-        pi.exec("herdr", [
-          "notification", "show", `${wsLabel}`,
-          "--body", `${tabLabel} question`,
-        ]);
-      }
-    } catch {
-      // skip notification on parse failure
-    }
-  }
-  */
 }
 
 async function tellHerdrWeAreDone(pi: ExtensionAPI) {
@@ -238,7 +197,7 @@ async function tellHerdrWeAreDone(pi: ExtensionAPI) {
 export default function askExtension(pi: ExtensionAPI) {
   pi.registerTool({
     name: ASK_TOOL_NAME,
-    label: "Socrates",
+    label: ASK_TOOL_NAME,
     description: ASK_TOOL_DESCRIPTION,
     parameters: AskParamsSchema,
 
@@ -283,9 +242,7 @@ export default function askExtension(pi: ExtensionAPI) {
         const [q] = params.questions;
         const uiQ = questionsAsAskQuestions[0];
 
-        // Notify Herdr that the agent is blocked waiting for user input
         tellHerdrWeHaveAQuestion(pi);
-
         if (q.multi) {
           const multiResult = (await askQuestionsWithTabs(ctx.ui, [uiQ]))
             .selections[0] ?? { selectedOptions: [] };
@@ -297,51 +254,42 @@ export default function askExtension(pi: ExtensionAPI) {
           );
           var selection = singleResult;
         }
-
-        // Notify Herdr that the agent is back to idle
         tellHerdrWeAreDone(pi);
+
         const optionLabels = q.options.map((option) => option.label);
 
         const result: QuestionResult = {
           id: q.id,
           question: q.question,
-          markdownCtx: q.markdownCtx,
           options: optionLabels,
           multi: q.multi ?? false,
           selectedOptions: selection.selectedOptions,
           customInput: selection.customInput,
-        };
-
-        const details: AskToolDetails = {
-          id: q.id,
-          question: q.question,
-          options: optionLabels,
-          multi: q.multi ?? false,
-          selectedOptions: selection.selectedOptions,
-          customInput: selection.customInput,
-          results: [result],
         };
 
         return {
           content: [{ type: "text", text: buildAskSessionContent([result]) }],
-          details,
+          details: {
+            results: [result],
+          },
         };
       }
 
       const results: QuestionResult[] = [];
+
       tellHerdrWeHaveAQuestion(pi);
       const tabResult = await askQuestionsWithTabs(
         ctx.ui,
         questionsAsAskQuestions,
       );
       tellHerdrWeAreDone(pi);
+
       for (let i = 0; i < params.questions.length; i++) {
         const q = params.questions[i];
         const selection = tabResult.selections[i] ?? { selectedOptions: [] };
         results.push({
           id: q.id,
           question: q.question,
-          markdownCtx: q.markdownCtx,
           options: q.options.map((option) => option.label),
           multi: q.multi ?? false,
           selectedOptions: selection.selectedOptions,
@@ -351,7 +299,7 @@ export default function askExtension(pi: ExtensionAPI) {
 
       return {
         content: [{ type: "text", text: buildAskSessionContent(results) }],
-        details: { results } satisfies AskToolDetails,
+        details: { results },
       };
     },
   });
